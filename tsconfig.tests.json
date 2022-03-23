@@ -27,7 +27,6 @@
         "out",
         "out-tests",
         "out-browser",
-        "out-browser-tests",
-        "src/examples"
+        "out-browser-tests"
     ]
 }
