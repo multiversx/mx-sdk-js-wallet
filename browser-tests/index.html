@@ -1,0 +1,24 @@
+<html>
+
+<head>
+    <base href="../" />
+    <meta charset="utf-8">
+    <title>Run erdjs-walletcore Tests in the Browser</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/node_modules/mocha/mocha.css">
+</head>
+
+<body>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="/node_modules/mocha/mocha.js"></script>
+    <script src="/out-browser-tests/erdjs-tests-unit.js"></script>
+
+    <script>mocha.setup("bdd")</script>
+    <script>
+        mocha.checkLeaks();
+        mocha.globals(["jQuery"]);
+        mocha.run();
+    </script>
+</body>
+
+</html>
