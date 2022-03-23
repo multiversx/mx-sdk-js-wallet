@@ -62,5 +62,5 @@ npm install --global http-server
 In order to run the tests **in the browser**, do as follows:
 
 ```
-make clean && npm run browser-tests
+npm run browser-tests
 ```
