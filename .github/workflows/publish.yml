@@ -24,7 +24,8 @@ jobs:
           RELEASE_TAG=v$(node -p "require('./package.json').version")
           gh release create $RELEASE_TAG --title="$RELEASE_TAG" --generate-notes --notes-file=notes.txt
       
-      - run: npm ci
+      # TODO: Change this to "npm ci" in the next PR, when separately committing package-lock.json.
+      - run: npm i
       - run: npm test
       
       - name: Publish to npmjs
