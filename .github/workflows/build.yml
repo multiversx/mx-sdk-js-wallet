@@ -1,0 +1,28 @@
+name: Build and Test erdjs-walletcore
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-erdjs:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    # TODO: Change this to "npm ci" in the next PR, when separately committing package-lock.json.
+    - run: npm i
+    - run: npm run compile
+    - run: npm run compile-browser
+    - run: npm run compile-browser-min
+    - run: npm test

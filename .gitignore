@@ -1,0 +1,6 @@
+.idea
+out
+out-tests
+out-browser
+node_modules/
+tags
