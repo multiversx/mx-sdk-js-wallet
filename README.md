@@ -4,7 +4,7 @@ Core wallet components (generation, signing) for TypeScript (JavaScript).
 
 ## CHANGELOG
 
-[CHANGELOG](CHANGELOG.md)
+[CHANGELOG](https://github.com/ElrondNetwork/elrond-sdk-erdjs-walletcore/blob/main/CHANGELOG.md)
 
 ## Distribution
 
