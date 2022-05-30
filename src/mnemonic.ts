@@ -20,7 +20,7 @@ export class Mnemonic {
 
     static fromString(text: string) {
         text = text.trim();
-        
+
         Mnemonic.assertTextIsValid(text);
         return new Mnemonic(text);
     }
@@ -34,11 +34,40 @@ export class Mnemonic {
     }
 
     deriveKey(addressIndex: number = 0, password: string = ""): UserSecretKey {
-        let seed = mnemonicToSeedSync(this.text, password);
-        let derivationPath = `${BIP44_DERIVATION_PREFIX}/${addressIndex}'`;
-        let derivationResult = derivePath(derivationPath, seed.toString("hex"));
-        let key = derivationResult.key;
+        const seed = mnemonicToSeedSync(this.text, password);
+        return this.deriveKeyWithIndex(seed, addressIndex);
+    }
+
+    private deriveKeyWithIndex(seed: Buffer, addressIndex: number): UserSecretKey {
+        const derivationPath = `${BIP44_DERIVATION_PREFIX}/${addressIndex}'`;
+        const derivationResult = derivePath(derivationPath, seed.toString("hex"));
+        const key = derivationResult.key;
         return new UserSecretKey(key);
+    }
+
+    deriveKeysWithPredicate(options: {
+        startAddressIndex: number,
+        stopAddressIndex: number,
+        numStop: number;
+        password?: string,
+        predicate: (index: number, userKey: UserSecretKey) => boolean
+    }): { index: number, userKey: UserSecretKey }[] {
+        const userKeys: { index: number, userKey: UserSecretKey }[] = [];
+        const seed = mnemonicToSeedSync(this.text, options.password || "");
+
+        for (let index = options.startAddressIndex; index < options.stopAddressIndex; index++) {
+            const userKey = this.deriveKeyWithIndex(seed, index);
+
+            if (options.predicate(index, userKey)) {
+                userKeys.push({ index: index, userKey: userKey });
+            }
+
+            if (userKeys.length == options.numStop) {
+                break;
+            }
+        }
+
+        return userKeys;
     }
 
     getWords(): string[] {
