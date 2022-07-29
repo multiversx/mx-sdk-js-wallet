@@ -1,6 +1,6 @@
 {
   "name": "@elrondnetwork/erdjs-walletcore",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Core wallet components for Elrond Network",
   "main": "out/index.js",
   "types": "out/index.d.js",
@@ -18,7 +18,7 @@
     "prepare": "npm run compile"
   },
   "author": "ElrondNetwork",
-  "license": "GPL-3.0-or-later",
+  "license": "MIT",
   "dependencies": {
     "@elrondnetwork/bls-wasm": "0.3.3",
     "bech32": "1.1.4",
