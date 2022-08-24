@@ -7,8 +7,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## Unreleased
  - TBD
 
-## [1.0.0]
- - Extracted `walletcore` and `crypto` packages from `erdjs`.
+## [2.1.0]
+ - Implemented X25519 encryption, now `PubkeyDecryptor` and `PubkeyEncryptor` components are available
 
 ## [2.0.0]
 -   Switched to MIT license
+
+## [1.0.0]
+ - Extracted `walletcore` and `crypto` packages from `erdjs`.
