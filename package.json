@@ -1,6 +1,6 @@
 {
   "name": "@elrondnetwork/erdjs-walletcore",
-  "version": "2.1.0",
+  "version": "3.0.0-alpha.0",
   "description": "Core wallet components for Elrond Network",
   "main": "out/index.js",
   "types": "out/index.d.js",
