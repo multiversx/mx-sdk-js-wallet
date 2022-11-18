@@ -19,11 +19,10 @@ export class UserWallet {
      * Given a password, generates the contents for a file containing the account's secret key,
      * passed through a password-based key derivation function (kdf).
      */
-    constructor(secretKey: UserSecretKey, password: string, randomness: Randomness = new Randomness(), /*addressPrefix?: string*/) {
+    constructor(secretKey: UserSecretKey, password: string, randomness: Randomness = new Randomness()) {
         const text = Buffer.concat([secretKey.valueOf(), secretKey.generatePublicKey().valueOf()]);
         this.encryptedData = Encryptor.encrypt(text, password, randomness);
         this.publicKey = secretKey.generatePublicKey();
-        // this.addressPrefix = addressPrefix || defaultAddressPrefix;
     }
 
     /**
