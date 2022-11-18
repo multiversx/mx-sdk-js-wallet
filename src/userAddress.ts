@@ -2,18 +2,15 @@ import * as bech32 from "bech32";
 import { ErrBadAddress } from "./errors";
 
 /**
- * The human-readable-part of the bech32 addresses.
- */
-const HRP = "erd";
-
-/**
  * A user Address, as an immutable object.
  */
 export class UserAddress {
+    private readonly prefix: string;
     private readonly buffer: Buffer;
 
-    public constructor(buffer: Buffer) {
+    public constructor(buffer: Buffer, prefix?: string) {
         this.buffer = buffer;
+        this.prefix = prefix || defaultAddressPrefix;
     }
 
     static fromBech32(value: string): UserAddress {
@@ -25,12 +22,8 @@ export class UserAddress {
             throw new ErrBadAddress(value, err);
         }
 
-        if (decoded.prefix != HRP) {
-            throw new ErrBadAddress(value);
-        }
-
         let pubkey = Buffer.from(bech32.fromWords(decoded.words));
-        return new UserAddress(pubkey);
+        return new UserAddress(pubkey, decoded.prefix);
     }
 
     /**
@@ -45,7 +38,7 @@ export class UserAddress {
      */
     bech32(): string {
         let words = bech32.toWords(this.pubkey());
-        let address = bech32.encode(HRP, words);
+        let address = bech32.encode(this.prefix, words);
         return address;
     }
 

@@ -5,6 +5,7 @@ import { ScryptKeyDerivationParams } from "./crypto/derivationParams";
 export class UserWallet {
     private readonly publicKey: UserPublicKey;
     private readonly encryptedData: EncryptedData;
+    private addressPrefix: string;
 
     /**
      * Copied from: https://github.com/ElrondNetwork/elrond-core-js/blob/v1.28.0/src/account.js#L76
@@ -17,10 +18,11 @@ export class UserWallet {
      * Given a password, generates the contents for a file containing the account's secret key,
      * passed through a password-based key derivation function (kdf).
      */
-    constructor(secretKey: UserSecretKey, password: string, randomness: Randomness = new Randomness()) {
+    constructor(secretKey: UserSecretKey, password: string, randomness: Randomness = new Randomness(), addressPrefix?: string) {
         const text = Buffer.concat([secretKey.valueOf(), secretKey.generatePublicKey().valueOf()]);
         this.encryptedData = Encryptor.encrypt(text, password, randomness);
         this.publicKey = secretKey.generatePublicKey();
+        this.addressPrefix = addressPrefix || defaultAddressPrefix;
     }
 
     /**
@@ -55,10 +57,10 @@ export class UserWallet {
             iv: keyfileObject.crypto.cipherparams.iv,
             kdf: keyfileObject.crypto.kdf,
             kdfparams: new ScryptKeyDerivationParams(
-              keyfileObject.crypto.kdfparams.n,
-              keyfileObject.crypto.kdfparams.r,
-              keyfileObject.crypto.kdfparams.p,
-              keyfileObject.crypto.kdfparams.dklen
+                keyfileObject.crypto.kdfparams.n,
+                keyfileObject.crypto.kdfparams.r,
+                keyfileObject.crypto.kdfparams.p,
+                keyfileObject.crypto.kdfparams.dklen
             ),
             salt: keyfileObject.crypto.kdfparams.salt,
             mac: keyfileObject.crypto.mac,
@@ -68,12 +70,13 @@ export class UserWallet {
     /**
      * Converts the encrypted keyfile to plain JavaScript object.
      */
-    toJSON(): any {
+    toJSON(addressPrefix?: string): any {
+        addressPrefix = addressPrefix || this.addressPrefix;
         return {
             version: Version,
             id: this.encryptedData.id,
             address: this.publicKey.hex(),
-            bech32: this.publicKey.toAddress().toString(),
+            bech32: this.publicKey.toAddress(addressPrefix).toString(),
             crypto: {
                 ciphertext: this.encryptedData.ciphertext,
                 cipherparams: { iv: this.encryptedData.iv },

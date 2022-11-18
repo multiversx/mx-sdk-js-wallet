@@ -57,7 +57,7 @@ export class UserPublicKey {
 
     constructor(buffer: Buffer) {
         guardLength(buffer, USER_PUBKEY_LENGTH);
-        
+
         this.buffer = buffer;
     }
 
@@ -76,8 +76,8 @@ export class UserPublicKey {
         return this.buffer.toString("hex");
     }
 
-    toAddress(): IAddress {
-        return new UserAddress(this.buffer);
+    toAddress(prefix?: string): IAddress {
+        return new UserAddress(this.buffer, prefix);
     }
 
     valueOf(): Buffer {
