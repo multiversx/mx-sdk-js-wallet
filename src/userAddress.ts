@@ -1,6 +1,6 @@
 import * as bech32 from "bech32";
 import { ErrBadAddress } from "./errors";
-import { defaultAddressPrefix } from "./constants";
+import { defaultAddressPrefix } from "./constants"
 
 /**
  * A user Address, as an immutable object.
