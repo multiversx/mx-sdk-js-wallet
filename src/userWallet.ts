@@ -1,6 +1,7 @@
 import { UserPublicKey, UserSecretKey } from "./userKeys";
 import { EncryptedData, Encryptor, Decryptor, CipherAlgorithm, Version, KeyDerivationFunction, Randomness } from "./crypto";
 import { ScryptKeyDerivationParams } from "./crypto/derivationParams";
+import { defaultAddressPrefix } from "./constants";
 
 export class UserWallet {
     private readonly publicKey: UserPublicKey;
