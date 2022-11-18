@@ -59,3 +59,7 @@ export interface IVerifiable {
      */
     serializeForSigning(signedBy?: IAddress): Buffer;
 }
+ 
+export interface AddressConfig {
+    prefix: string;
+}

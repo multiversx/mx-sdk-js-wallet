@@ -1,6 +1,8 @@
 import { UserPublicKey, UserSecretKey } from "./userKeys";
 import { EncryptedData, Encryptor, Decryptor, CipherAlgorithm, Version, KeyDerivationFunction, Randomness } from "./crypto";
 import { ScryptKeyDerivationParams } from "./crypto/derivationParams";
+import { AddressConfig } from "./interface";
+import { DefaultAddressConfig } from "./constants"
 
 export class UserWallet {
     private readonly publicKey: UserPublicKey;
@@ -55,10 +57,10 @@ export class UserWallet {
             iv: keyfileObject.crypto.cipherparams.iv,
             kdf: keyfileObject.crypto.kdf,
             kdfparams: new ScryptKeyDerivationParams(
-              keyfileObject.crypto.kdfparams.n,
-              keyfileObject.crypto.kdfparams.r,
-              keyfileObject.crypto.kdfparams.p,
-              keyfileObject.crypto.kdfparams.dklen
+                keyfileObject.crypto.kdfparams.n,
+                keyfileObject.crypto.kdfparams.r,
+                keyfileObject.crypto.kdfparams.p,
+                keyfileObject.crypto.kdfparams.dklen
             ),
             salt: keyfileObject.crypto.kdfparams.salt,
             mac: keyfileObject.crypto.mac,
@@ -68,12 +70,13 @@ export class UserWallet {
     /**
      * Converts the encrypted keyfile to plain JavaScript object.
      */
-    toJSON(): any {
+    toJSON(addressPrefix?: AddressConfig): any {
+        addressPrefix = { ...DefaultAddressConfig, ...addressPrefix }
         return {
             version: Version,
             id: this.encryptedData.id,
             address: this.publicKey.hex(),
-            bech32: this.publicKey.toAddress().toString(),
+            bech32: this.publicKey.toAddress(addressPrefix.prefix).toString(),
             crypto: {
                 ciphertext: this.encryptedData.ciphertext,
                 cipherparams: { iv: this.encryptedData.iv },
