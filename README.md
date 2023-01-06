@@ -38,7 +38,6 @@ In order to compile `erdjs-walletcore`, run the following:
 npm install
 npm run compile
 npm run compile-browser
-npm run compile-browser-min
 ```
 
 ### Running the tests
