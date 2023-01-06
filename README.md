@@ -1,21 +1,21 @@
-# Elrond SDK for JavaScript: core wallet components
+# MultiversX SDK for JavaScript and TypeScript: core wallet components
 
 Core wallet components (generation, signing) for TypeScript (JavaScript). 
 
 ## CHANGELOG
 
-[CHANGELOG](https://github.com/ElrondNetwork/elrond-sdk-erdjs-walletcore/blob/main/CHANGELOG.md)
+[CHANGELOG](https://github.com/multiversx/mx-sdk-erdjs-walletcore/blob/main/CHANGELOG.md)
 
 ## Distribution
 
-[npm](https://www.npmjs.com/package/@elrondnetwork/erdjs-walletcore)
+[npm](https://www.npmjs.com/package/@multiversx/erdjs-walletcore)
 
 ## Installation
 
-`erdjs-walletcore` is delivered via [npm](https://www.npmjs.com/package/@elrondnetwork/erdjs-walletcore), therefore it can be installed as follows:
+`erdjs-walletcore` is delivered via [npm](https://www.npmjs.com/package/@multiversx/erdjs-walletcore), therefore it can be installed as follows:
 
 ```
-npm install @elrondnetwork/erdjs-walletcore
+npm install @multiversx/erdjs-walletcore
 ```
 
 ## Development

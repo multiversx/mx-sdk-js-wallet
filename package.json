@@ -1,7 +1,7 @@
 {
   "name": "@elrondnetwork/erdjs-walletcore",
   "version": "2.1.0",
-  "description": "Core wallet components for Elrond Network",
+  "description": "Core wallet components for MultiversX",
   "main": "out/index.js",
   "types": "out/index.d.js",
   "files": [
@@ -17,7 +17,7 @@
     "pretest": "npm run compile",
     "prepare": "npm run compile"
   },
-  "author": "ElrondNetwork",
+  "author": "MultiversX",
   "license": "MIT",
   "dependencies": {
     "@elrondnetwork/bls-wasm": "0.3.3",
