@@ -23,5 +23,4 @@ jobs:
     - run: npm ci
     - run: npm run compile
     - run: npm run compile-browser
-    - run: npm run compile-browser-min
     - run: npm test
