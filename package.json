@@ -1,5 +1,5 @@
 {
-  "name": "@elrondnetwork/erdjs-walletcore",
+  "name": "@multiversx/erdjs-walletcore",
   "version": "2.1.1",
   "description": "Core wallet components for MultiversX",
   "main": "out/index.js",

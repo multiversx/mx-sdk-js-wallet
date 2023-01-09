@@ -2,10 +2,6 @@
 
 Core wallet components (generation, signing) for TypeScript (JavaScript). 
 
-## CHANGELOG
-
-[CHANGELOG](https://github.com/multiversx/mx-sdk-erdjs-walletcore/blob/main/CHANGELOG.md)
-
 ## Distribution
 
 [npm](https://www.npmjs.com/package/@multiversx/erdjs-walletcore)
