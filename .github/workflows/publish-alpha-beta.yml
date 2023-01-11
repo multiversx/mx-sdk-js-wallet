@@ -1,4 +1,4 @@
-name: Publish erdjs-walletcore (alpha / beta)
+name: Publish (alpha / beta)
 
 on:
   workflow_dispatch:
