@@ -1,6 +1,6 @@
 {
   "name": "@multiversx/sdk-wallet",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Wallet components for MultiversX",
   "main": "out/index.js",
   "types": "out/index.d.js",
@@ -19,7 +19,7 @@
   "author": "MultiversX",
   "license": "MIT",
   "dependencies": {
-    "@elrondnetwork/bls-wasm": "0.3.3",
+    "@multiversx/sdk-bls-wasm": "0.3.4",
     "bech32": "1.1.4",
     "bip39": "3.0.2",
     "blake2b": "2.1.3",
