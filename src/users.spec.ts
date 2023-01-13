@@ -35,6 +35,23 @@ describe("test user wallets", () => {
         assert.equal(mnemonic.deriveKey(2).hex(), carol.secretKeyHex);
     });
 
+    it("should derive keys with predicate", async function() {    
+        this.timeout(20000);
+
+        const mnemonic = Mnemonic.fromString(DummyMnemonic);
+        const keys = mnemonic.deriveKeysWithPredicate({
+            startAddressIndex: 0,
+            stopAddressIndex: 10000,
+            numStop: 4,
+            predicate: (_index: number, userKey: UserSecretKey) => {
+                const pk = userKey.generatePublicKey().hex();
+                return pk.endsWith("2a");
+            }
+        });
+
+        assert.lengthOf(keys, 4);
+    });
+
     it("should create secret key", () => {
         let keyHex = alice.secretKeyHex;
         let fromBuffer = new UserSecretKey(Buffer.from(keyHex, "hex"));
