@@ -19,7 +19,7 @@
   "author": "MultiversX",
   "license": "MIT",
   "dependencies": {
-    "@multiversx/sdk-bls-wasm": "0.3.4",
+    "@multiversx/sdk-bls-wasm": "0.3.5",
     "bech32": "1.1.4",
     "bip39": "3.0.2",
     "blake2b": "2.1.3",
