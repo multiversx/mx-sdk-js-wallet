@@ -1,21 +1,17 @@
-# Elrond SDK for JavaScript: core wallet components
+# MultiversX SDK for JavaScript and TypeScript: wallet components
 
-Core wallet components (generation, signing) for TypeScript (JavaScript). 
-
-## CHANGELOG
-
-[CHANGELOG](https://github.com/ElrondNetwork/elrond-sdk-erdjs-walletcore/blob/main/CHANGELOG.md)
+Wallet components (generation, signing) for TypeScript (JavaScript). 
 
 ## Distribution
 
-[npm](https://www.npmjs.com/package/@elrondnetwork/erdjs-walletcore)
+[npm](https://www.npmjs.com/package/@multiversx/sdk-wallet)
 
 ## Installation
 
-`erdjs-walletcore` is delivered via [npm](https://www.npmjs.com/package/@elrondnetwork/erdjs-walletcore), therefore it can be installed as follows:
+`sdk-wallet` is delivered via [npm](https://www.npmjs.com/package/@multiversx/sdk-wallet), therefore it can be installed as follows:
 
 ```
-npm install @elrondnetwork/erdjs-walletcore
+npm install @multiversx/sdk-wallet
 ```
 
 ## Development
@@ -24,7 +20,7 @@ Feel free to skip this section if you are not a contributor.
 
 ### Prerequisites
 
-`browserify` is required to compile the browser-friendly versions of `erdjs-walletcore`. It can be installed as follows:
+`browserify` is required to compile the browser-friendly versions of `sdk-wallet`. It can be installed as follows:
 
 ```
 npm install --global browserify
@@ -32,13 +28,12 @@ npm install --global browserify
 
 ### Building the library
 
-In order to compile `erdjs-walletcore`, run the following:
+In order to compile `sdk-wallet`, run the following:
 
 ```
 npm install
 npm run compile
 npm run compile-browser
-npm run compile-browser-min
 ```
 
 ### Running the tests

@@ -1,4 +1,4 @@
-name: Build and Test erdjs-walletcore
+name: Build and Test
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-erdjs:
+  build:
 
     runs-on: ubuntu-latest
 
@@ -23,5 +23,4 @@ jobs:
     - run: npm ci
     - run: npm run compile
     - run: npm run compile-browser
-    - run: npm run compile-browser-min
     - run: npm test
