@@ -1,6 +1,6 @@
 {
   "name": "@multiversx/sdk-wallet",
-  "version": "v3.0.0-alpha.2",
+  "version": "3.0.0-alpha.3",
   "description": "Wallet components for MultiversX",
   "main": "out/index.js",
   "types": "out/index.d.js",
