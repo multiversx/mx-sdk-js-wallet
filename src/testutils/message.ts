@@ -1,14 +1,12 @@
-import { ISignable, ISignature, IVerifiable } from "../interface";
-import { Signature } from "../signature";
+import { ISignable } from "../interface";
 
 /**
  * A dummy message used in tests.
  */
-export class TestMessage implements ISignable, IVerifiable {
+export class TestMessage implements ISignable {
     foo: string = "";
     bar: string = "";
-    signature: string = "";
-    guardianSignature: string = "";
+    signature: Buffer = Buffer.from("");
 
     constructor(init?: Partial<TestMessage>) {
         Object.assign(this, init);
@@ -24,11 +22,11 @@ export class TestMessage implements ISignable, IVerifiable {
         return Buffer.from(serialized);
     }
 
-    applySignature(signature: ISignature) {
-        this.signature = signature.hex();
+    applySignature(signature: Buffer) {
+        this.signature = signature;
     }
 
-    getSignature(): ISignature {
-        return new Signature(Buffer.from(this.signature, "hex"));
+    getSignature(): Buffer {
+        return this.signature;
     }
 }

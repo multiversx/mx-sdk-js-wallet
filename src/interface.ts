@@ -1,7 +1,3 @@
-export interface ISignature {
-    hex(): string;
-}
-
 /**
  * An interface that defines a signable object (e.g. a transaction).
  */
@@ -16,7 +12,7 @@ export interface ISignable {
      *
      * @param signature The computed signature
     */
-    applySignature(signature: ISignature): void;
+    applySignature(signature: Buffer): void;
 }
 
 export interface IGuardableSignable extends ISignable {
@@ -25,20 +21,6 @@ export interface IGuardableSignable extends ISignable {
     *
     * @param guardianSignature The signature, as computed by a guardian.
     */
-    applyGuardianSignature(guardianSignature: ISignature): void;
+    applyGuardianSignature(guardianSignature: Buffer): void;
 }
 
-/**
- * Interface that defines a signed and verifiable object
- */
-export interface IVerifiable {
-    /**
-     * Returns the signature that should be verified
-     */
-    getSignature(): ISignature;
-
-    /**
-     * Returns the signable object in its raw form - a sequence of bytes to be verified.
-     */
-    serializeForSigning(): Buffer;
-}

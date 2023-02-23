@@ -1,6 +1,5 @@
 import { ErrSignerCannotSign } from "./errors";
 import { ISignable } from "./interface";
-import { Signature } from "./signature";
 import { UserAddress } from "./userAddress";
 import { UserSecretKey } from "./userKeys";
 import { UserWallet } from "./userWallet";
@@ -40,9 +39,8 @@ export class UserSigner {
     private trySign(signable: ISignable) {
         let bufferToSign = signable.serializeForSigning();
         let signatureBuffer = this.secretKey.sign(bufferToSign);
-        let signature = new Signature(signatureBuffer);
 
-        signable.applySignature(signature);
+        signable.applySignature(signatureBuffer);
     }
 
     /**

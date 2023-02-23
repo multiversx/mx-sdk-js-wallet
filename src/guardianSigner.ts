@@ -1,6 +1,5 @@
 import { ErrSignerCannotSign } from "./errors";
 import { IGuardableSignable } from "./interface";
-import { Signature } from "./signature";
 import { UserSecretKey } from "./userKeys";
 import { UserSigner } from "./userSigner";
 
@@ -28,8 +27,7 @@ export class GuardianSigner extends UserSigner {
     private tryGuard(signable: IGuardableSignable) {
         const bufferToSign = signable.serializeForSigning();
         const guardianSignatureBuffer = this.secretKey.sign(bufferToSign);
-        const guardianSignature = new Signature(guardianSignatureBuffer);
 
-        signable.applyGuardianSignature(guardianSignature);
+        signable.applyGuardianSignature(guardianSignatureBuffer);
     }
 }
