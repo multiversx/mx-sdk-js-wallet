@@ -301,6 +301,8 @@ describe("test user wallets", () => {
 
         const data = message.serializeForSigning();
         const signature = await signer.sign(data);
+
         assert.isTrue(verifier.verify(data, signature));
+        assert.isFalse(verifier.verify(Buffer.from("hello"), signature));
     });
 });
