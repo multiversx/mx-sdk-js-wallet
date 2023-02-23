@@ -14,8 +14,6 @@ export class TestTransaction {
 
     sender: string = "";
     guardian: string = "";
-    guardianSignature: Buffer = Buffer.from("");
-    signature: Buffer = Buffer.from("");
 
     constructor(init?: Partial<TestTransaction>) {
         Object.assign(this, init);
@@ -42,21 +40,5 @@ export class TestTransaction {
 
         const serialized = JSON.stringify(plainObject);
         return Buffer.from(serialized);
-    }
-
-    applySignature(signature: Buffer) {
-        this.signature = signature;
-    }
-
-    applyGuardianSignature(guardianSignature: Buffer) {
-        this.guardianSignature = guardianSignature;
-    }
-
-    getSignature(): Buffer {
-        return this.signature;
-    }
-
-    getGuardianSignature(): Buffer {
-        return this.guardianSignature;
     }
 }

@@ -194,11 +194,11 @@ describe("test user wallets", () => {
         });
 
         let serialized = transaction.serializeForSigning();
-        transaction.applySignature(await signer.sign(serialized));
+        let signature = await signer.sign(serialized);
 
         assert.equal(serialized.toString(), `{"nonce":0,"value":"0","receiver":"erd1cux02zersde0l7hhklzhywcxk4u9n4py5tdxyx7vrvhnza2r4gmq4vw35r","sender":"","gasPrice":1000000000,"gasLimit":50000,"data":"Zm9v","chainID":"1","version":1}`);
-        assert.equal(transaction.getSignature().toString("hex"), "a3b61a2fe461f3393c42e6cb0477a6b52ffd92168f10c111f6aa8d0a310ee0c314fae0670f8313f1ad992933ac637c61a8ff20cc20b6a8b2260a4af1a120a70d");
-        assert.isTrue(verifier.verify(transaction.serializeForSigning(), transaction.getSignature()));
+        assert.equal(signature.toString("hex"), "a3b61a2fe461f3393c42e6cb0477a6b52ffd92168f10c111f6aa8d0a310ee0c314fae0670f8313f1ad992933ac637c61a8ff20cc20b6a8b2260a4af1a120a70d");
+        assert.isTrue(verifier.verify(serialized, signature));
         // Without data field
         transaction = new TestTransaction({
             nonce: 8,
@@ -210,10 +210,10 @@ describe("test user wallets", () => {
         });
 
         serialized = transaction.serializeForSigning();
-        transaction.applySignature(await signer.sign(serialized));
+        signature = await signer.sign(serialized);
 
         assert.equal(serialized.toString(), `{"nonce":8,"value":"10000000000000000000","receiver":"erd1cux02zersde0l7hhklzhywcxk4u9n4py5tdxyx7vrvhnza2r4gmq4vw35r","sender":"","gasPrice":1000000000,"gasLimit":50000,"chainID":"1","version":1}`);
-        assert.equal(transaction.getSignature().toString("hex"), "f136c901d37349a7da8cfe3ab5ec8ef333b0bc351517c0e9bef9eb9704aed3077bf222769cade5ff29dffe5f42e4f0c5e0b068bdba90cd2cb41da51fd45d5a03");
+        assert.equal(signature.toString("hex"), "f136c901d37349a7da8cfe3ab5ec8ef333b0bc351517c0e9bef9eb9704aed3077bf222769cade5ff29dffe5f42e4f0c5e0b068bdba90cd2cb41da51fd45d5a03");
     });
 
     it("guardian should sign transactions from PEM", async () => {
@@ -221,6 +221,7 @@ describe("test user wallets", () => {
         let signer = new UserSigner(UserSecretKey.fromString("1a927e2af5306a9bb2ea777f73e06ecc0ac9aaa72fb4ea3fecf659451394cccf"));
         let verifier = new UserVerifier(UserSecretKey.fromString("1a927e2af5306a9bb2ea777f73e06ecc0ac9aaa72fb4ea3fecf659451394cccf").generatePublicKey());
         let guardianSigner = new UserSigner(UserSecretKey.fromPem(bob.pemFileText));
+        let guardianVerifier = new UserVerifier(UserSecretKey.fromPem(bob.pemFileText).generatePublicKey());
 
         // With data field
         let transaction = new TestTransaction({
@@ -238,13 +239,15 @@ describe("test user wallets", () => {
         });
 
         let serialized = transaction.serializeForSigning();
-        transaction.applySignature(await signer.sign(serialized));
-        transaction.applyGuardianSignature(await guardianSigner.sign(serialized));
+        let signature = await signer.sign(serialized);
+        let guardianSignature = await guardianSigner.sign(serialized);
 
         assert.equal(serialized.toString(), `{"nonce":0,"value":"0","receiver":"erd1cux02zersde0l7hhklzhywcxk4u9n4py5tdxyx7vrvhnza2r4gmq4vw35r","sender":"erd1l453hd0gt5gzdp7czpuall8ggt2dcv5zwmfdf3sd3lguxseux2fsmsgldz","guardian":"erd1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqzu66jx","gasPrice":1000000000,"gasLimit":50000,"data":"Zm9v","chainID":"1","options":2,"version":2}`);
-        assert.equal(transaction.getSignature().toString("hex"), "00b867ae749616954711ef227c0a3f5c6556246f26dbde12ad929a099094065341a0fae7c5ced98e6bdd100ce922c975667444ea859dce9597b46e63cade2a03");
-        assert.equal(transaction.getGuardianSignature().toString("hex"), "1326e44941ef7bfbad3edf346e72abe23704ee32b4b6a6a6a9b793bd7c62b6d4a69d3c6ea2dddf7eabc8df8fe291cd24822409ab9194b6a0f3bbbf1c59b0a10f");
-        assert.isTrue(verifier.verify(transaction.serializeForSigning(), transaction.getSignature()));
+        assert.equal(signature.toString("hex"), "00b867ae749616954711ef227c0a3f5c6556246f26dbde12ad929a099094065341a0fae7c5ced98e6bdd100ce922c975667444ea859dce9597b46e63cade2a03");
+        assert.equal(guardianSignature.toString("hex"), "1326e44941ef7bfbad3edf346e72abe23704ee32b4b6a6a6a9b793bd7c62b6d4a69d3c6ea2dddf7eabc8df8fe291cd24822409ab9194b6a0f3bbbf1c59b0a10f");
+        assert.isTrue(verifier.verify(transaction.serializeForSigning(), signature));
+        assert.isTrue(guardianVerifier.verify(transaction.serializeForSigning(), guardianSignature));
+
         // Without data field
         transaction = new TestTransaction({
             nonce: 8,
@@ -260,10 +263,14 @@ describe("test user wallets", () => {
         });
 
         serialized = transaction.serializeForSigning();
-        transaction.applySignature(await signer.sign(serialized));
+        signature = await signer.sign(serialized);
+        guardianSignature = await guardianSigner.sign(serialized);
 
         assert.equal(serialized.toString(), `{"nonce":8,"value":"10000000000000000000","receiver":"erd1cux02zersde0l7hhklzhywcxk4u9n4py5tdxyx7vrvhnza2r4gmq4vw35r","sender":"erd1l453hd0gt5gzdp7czpuall8ggt2dcv5zwmfdf3sd3lguxseux2fsmsgldz","guardian":"erd1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqzu66jx","gasPrice":1000000000,"gasLimit":50000,"chainID":"1","options":2,"version":2}`);
-        assert.equal(transaction.getSignature().toString("hex"), "49a63fa0e3cfb81a2b6d926c741328fb270ea4f58fa32585fe8aa3cde191245e5a13c5c059d5576f4c05fc24d2534a2124ff79c98d067ce8412c806779066b03");
+        assert.equal(signature.toString("hex"), "49a63fa0e3cfb81a2b6d926c741328fb270ea4f58fa32585fe8aa3cde191245e5a13c5c059d5576f4c05fc24d2534a2124ff79c98d067ce8412c806779066b03");
+        assert.equal(guardianSignature.toString("hex"), "4c25a54381bf66576d05f32659d30672b5b0bfbfb6b6aee52290d28cfbc87860637f095f83663a1893d12d0d5a27b2ab3325829ff1f1215b81a7ced8ee5d7203");
+        assert.isTrue(verifier.verify(transaction.serializeForSigning(), signature));
+        assert.isTrue(guardianVerifier.verify(transaction.serializeForSigning(), guardianSignature));
     });
 
     it("should sign transactions using PEM files", async () => {
