@@ -1,9 +1,7 @@
-import { ISignable } from "../interface";
-
 /**
  * A dummy transaction used in tests.
  */
-export class TestTransaction implements ISignable {
+export class TestTransaction {
     nonce: number = 0;
     value: string = "";
     receiver: string = "";
