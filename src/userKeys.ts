@@ -1,4 +1,4 @@
-import * as ed from "@noble/ed25519";
+const ed = require("./noble/ed25519/lib/index");
 import { sha512 } from "@noble/hashes/sha512";
 import { guardLength } from "./assertions";
 import { parseUserKey } from "./pem";
@@ -9,7 +9,7 @@ export const USER_PUBKEY_LENGTH = 32;
 
 // See: https://github.com/paulmillr/noble-ed25519
 // In a future version of sdk-wallet, we'll switch to using the async functions of noble-ed25519.
-ed.utils.sha512Sync = (...m) => sha512(ed.utils.concatBytes(...m));
+ed.utils.sha512Sync = (...m: any) => sha512(ed.utils.concatBytes(...m));
 
 export class UserSecretKey {
     private readonly buffer: Buffer;
