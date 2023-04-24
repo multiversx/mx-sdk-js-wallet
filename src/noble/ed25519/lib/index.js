@@ -479,6 +479,7 @@ function bytesToHex(uint8a) {
     return hex;
 }
 function hexToBytes(hex) {
+    console.log('hexToBytes', hex, typeof hex);
     if (typeof hex !== 'string') {
         throw new TypeError('hexToBytes: expected string, got ' + typeof hex);
     }
@@ -622,7 +623,9 @@ function equalBytes(b1, b2) {
     return true;
 }
 function ensureBytes(hex, expectedLength) {
+    console.log(`ensureBytes`, hex, expectedLength, hex instanceof Uint8Array);
     const bytes = hex instanceof Uint8Array ? Uint8Array.from(hex) : hexToBytes(hex);
+    console.log(`ensureBytes bytes`, bytes);
     if (typeof expectedLength === 'number' && bytes.length !== expectedLength)
         throw new Error(`Expected ${expectedLength} bytes`);
     return bytes;
