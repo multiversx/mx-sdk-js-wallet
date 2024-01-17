@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "test": "mocha",
-    "compile-browser": "tsc -p tsconfig.json && browserify out/index.js -o out-browser/sdk-wallet.js --standalone multiversxSdkWallet -p esmify",
+    "compile-browser": "bash ./scripts/compile_browser.sh",
     "compile": "tsc -p tsconfig.json",
     "browser-tests": "bash ./scripts/browser_tests.sh",
     "lint": "tslint --project .",
