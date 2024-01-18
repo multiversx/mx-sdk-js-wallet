@@ -18,14 +18,6 @@ npm install @multiversx/sdk-wallet
 
 Feel free to skip this section if you are not a contributor.
 
-### Prerequisites
-
-`browserify` is required to compile the browser-friendly versions of `sdk-wallet`. It can be installed as follows:
-
-```
-npm install --global browserify
-```
-
 ### Building the library
 
 In order to compile `sdk-wallet`, run the following:
@@ -47,12 +39,6 @@ npm run test
 ```
 
 #### In the browser
-
-Make sure you have the package `http-server` installed globally.
-
-```
-npm install --global http-server
-```
 
 In order to run the tests **in the browser**, do as follows:
 
