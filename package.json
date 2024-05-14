@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "test": "mocha",
+    "test-with-coverage": "nyc --reporter=html mocha",
     "compile-browser": "bash ./scripts/compile_browser.sh",
     "compile": "tsc -p tsconfig.json",
     "browser-tests": "bash ./scripts/browser_tests.sh",
