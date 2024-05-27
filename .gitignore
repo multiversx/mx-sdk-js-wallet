@@ -4,3 +4,5 @@ out-tests
 out-browser
 node_modules/
 tags
+coverage/
+.nyc_output

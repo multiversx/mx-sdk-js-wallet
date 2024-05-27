@@ -1,6 +1,6 @@
 {
   "name": "@multiversx/sdk-wallet",
-  "version": "4.4.0",
+  "version": "4.5.0",
   "description": "Wallet components for MultiversX",
   "main": "out/index.js",
   "types": "out/index.d.js",
@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "test": "mocha",
+    "test-with-coverage": "nyc --reporter=html mocha",
     "compile-browser": "bash ./scripts/compile_browser.sh",
     "compile": "tsc -p tsconfig.json",
     "browser-tests": "bash ./scripts/browser_tests.sh",
