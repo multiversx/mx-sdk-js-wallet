@@ -1,5 +1,6 @@
 import * as nobleUtils from "@noble/curves/abstract/utils";
 import { bls12_381 as nobleBls } from "@noble/curves/bls12-381";
+import { sha512 } from "@noble/hashes/sha512";
 import { assert } from "chai";
 
 const Fp = nobleBls.fields.Fp;
@@ -32,6 +33,22 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
         assert.equal(outputHex, expectedOutputHex);
     });
 });
+
+// Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/bn.hpp#L2122
+function hashAndMapToG1LikeHerumi(message: Uint8Array) {
+    const hash = sha512(message);
+    const hashMasked = setArrayMaskLikeHerumi(hash);
+    return mapToG1LikeHerumi(hashMasked);
+}
+
+function mapToG1LikeHerumi(t: Uint8Array) {
+    return calcBNLikeHerumi(t);
+}
+
+// Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/bn.hpp#L362
+// "Indifferentiable hashing to Barreto Naehrig curves" by Pierre-Alain Fouque and Mehdi Tibouchi
+// https://www.di.ens.fr/~fouque/pub/latincrypt12.pdf
+function calcBNLikeHerumi(t: Uint8Array) {}
 
 // Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/fp.hpp#L371
 // x &= (1 << bitLen) - 1
