@@ -33,6 +33,33 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
 
         assert.equal(outputHex, expectedOutputHex);
     });
+
+    it("test calcBNComputeWLikeHerumi", async function () {
+        const inputHex =
+            "f74f2603939a53656948480ce71f1ce466685b6654fd22c61c1f2ce4e2c96d1cd02d162b560c4beaf1ae45f3471dc50b";
+        const expectedOutputHex =
+            "340d1f61a8fff391e13cf5766327816f7468dbedb2f406e3dbcd629b555baacbc0b4ec07d26fea51f744498540683206";
+
+        const input = nobleUtils.bytesToNumberLE(Buffer.from(inputHex, "hex"));
+        const output = calcBNComputeWLikeHerumi(input);
+        const outputHex = Buffer.from(nobleUtils.numberToBytesLE(output, Fp.BYTES)).toString("hex");
+
+        assert.equal(outputHex, expectedOutputHex);
+    });
+
+    it("test calcBNLoopLikeHerumiIteration0", async function () {
+        const wHex = "340d1f61a8fff391e13cf5766327816f7468dbedb2f406e3dbcd629b555baacbc0b4ec07d26fea51f744498540683206";
+        const tHex = "f74f2603939a53656948480ce71f1ce466685b6654fd22c61c1f2ce4e2c96d1cd02d162b560c4beaf1ae45f3471dc50b";
+        const expectedOutputHex =
+            "b14695c802ca943acc28d5e47aec2ce163d3004559fc9d2e1659f5f22ca363f96548e504a6f2b9cab57bcce75c4e9309";
+
+        const w = nobleUtils.bytesToNumberLE(Buffer.from(wHex, "hex"));
+        const t = nobleUtils.bytesToNumberLE(Buffer.from(tHex, "hex"));
+        const output = calcBNLoopLikeHerumiIteration0(w, t);
+        const outputHex = Buffer.from(nobleUtils.numberToBytesLE(output, Fp.BYTES)).toString("hex");
+
+        assert.equal(outputHex, expectedOutputHex);
+    });
 });
 
 // Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/bn.hpp#L2122
@@ -95,14 +122,14 @@ function calcBNComputeWLikeHerumi(t: bigint): bigint {
     //     throw new Error("tAsBigInt == 0");
     // }
 
-    // F::sqr(w, t);
+    // Herumi code: F::sqr(w, t);
     let w = Fp.sqr(t);
 
-    // w += G::b_;
+    // Herumi code: w += G::b_;
     // TODO: WHY NOT ADD AS BELOW?
     w += G1.CURVE.b;
 
-    // *w.getFp0() += Fp::one();
+    // Herumi code: *w.getFp0() += Fp::one();
     w = Fp.add(w, Fp.ONE);
 
     // TODO how to compare with zero?
@@ -110,32 +137,44 @@ function calcBNComputeWLikeHerumi(t: bigint): bigint {
     //     throw new Error("w == 0");
     // }
 
-    // F::inv(w, w);
+    // Herumi code: F::inv(w, w);
     w = Fp.inv(w);
 
-    // mulFp(w, c1_);
+    // Herumi code: mulFp(w, c1_);
     w = Fp.mul(w, c1);
 
-    // w *= t;
+    // Herumi code: w *= t;
     w = Fp.mul(w, t);
 
     return w;
 }
 
+function calcBNLoopLikeHerumiIteration0(w: bigint, t: bigint): bigint {
+    const { c2 } = getHerumiConstants();
+
+    // Herumi code:
+    // F::mul(x, t, w);
+    // F::neg(x, x);
+    // *x.getFp0() += c2_;
+    let x = Fp.mul(t, w);
+    x = Fp.neg(x);
+
+    // TODO: is addition correct?
+    x += c2;
+
+    return x;
+}
+
 function calcBNLoopLikeHerumiIteration1(): bigint {
-    return 0n;
+    return BigInt(0);
 }
 
 function calcBNLoopLikeHerumiIteration2(): bigint {
-    return 0n;
-}
-
-function calcBNLoopLikeHerumiIteration3(): bigint {
-    return 0n;
+    return BigInt(0);
 }
 
 // Herumi code: (?)
-function legendreLikeHerumi(): number {
+function legendreLikeHerumi(_t: bigint): number {
     // Not implemented. Find alternative in Noble Crypto.
     return -1;
 }
