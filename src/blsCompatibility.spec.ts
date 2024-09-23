@@ -4,6 +4,7 @@ import { sha512 } from "@noble/hashes/sha512";
 import { assert } from "chai";
 
 const Fp = nobleBls.fields.Fp;
+const G1 = nobleBls.G1;
 
 describe.only("test BLS compatibility (noble crypto and herumi)", () => {
     it("test BLS implementations", async function () {});
@@ -41,15 +42,6 @@ function hashAndMapToG1LikeHerumi(message: Uint8Array) {
     return mapToG1LikeHerumi(hashMasked);
 }
 
-function mapToG1LikeHerumi(t: Uint8Array) {
-    return calcBNLikeHerumi(t);
-}
-
-// Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/bn.hpp#L362
-// "Indifferentiable hashing to Barreto Naehrig curves" by Pierre-Alain Fouque and Mehdi Tibouchi
-// https://www.di.ens.fr/~fouque/pub/latincrypt12.pdf
-function calcBNLikeHerumi(t: Uint8Array) {}
-
 // Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/fp.hpp#L371
 // x &= (1 << bitLen) - 1
 // x &= (1 << (bitLen - 1)) - 1 if x >= p
@@ -80,6 +72,72 @@ function setArrayMaskLikeHerumi(x: Uint8Array): Uint8Array {
     }
 
     return nobleUtils.numberToBytesLE(xAsBigInt, Fp.BYTES);
+}
+
+function mapToG1LikeHerumi(t: Uint8Array) {
+    return calcBNLikeHerumi(t);
+}
+
+// Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/bn.hpp#L362
+// "Indifferentiable hashing to Barreto Naehrig curves" by Pierre-Alain Fouque and Mehdi Tibouchi
+// https://www.di.ens.fr/~fouque/pub/latincrypt12.pdf
+function calcBNLikeHerumi(t: Uint8Array) {
+    let tAsBigInt = nobleUtils.bytesToNumberLE(t);
+
+    const w = calcBNComputeWLikeHerumi(tAsBigInt);
+}
+
+function calcBNComputeWLikeHerumi(t: bigint): bigint {
+    const { c1 } = getHerumiConstants();
+
+    // TODO how to compare with zero?
+    // if (tAsBigInt == 0n) {
+    //     throw new Error("tAsBigInt == 0");
+    // }
+
+    // F::sqr(w, t);
+    let w = Fp.sqr(t);
+
+    // w += G::b_;
+    // TODO: WHY NOT ADD AS BELOW?
+    w += G1.CURVE.b;
+
+    // *w.getFp0() += Fp::one();
+    w = Fp.add(w, Fp.ONE);
+
+    // TODO how to compare with zero?
+    // if (w == 0n) {
+    //     throw new Error("w == 0");
+    // }
+
+    // F::inv(w, w);
+    w = Fp.inv(w);
+
+    // mulFp(w, c1_);
+    w = Fp.mul(w, c1);
+
+    // w *= t;
+    w = Fp.mul(w, t);
+
+    return w;
+}
+
+function calcBNLoopLikeHerumiIteration1(): bigint {
+    return 0n;
+}
+
+function calcBNLoopLikeHerumiIteration2(): bigint {
+    return 0n;
+}
+
+function calcBNLoopLikeHerumiIteration3(): bigint {
+    return 0n;
+}
+
+// Herumi code: (?)
+function legendreLikeHerumi(): number {
+    // Not implemented. Find alternative in Noble Crypto.
+    return -1;
 }
 
 // Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/ec.hpp#L1954
