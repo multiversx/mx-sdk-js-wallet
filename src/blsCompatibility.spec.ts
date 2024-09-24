@@ -13,101 +13,67 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
         setupG2GeneratorPointsLikeHerumi();
     });
 
+    it("test get public key", async function () {
+        assert.equal(
+            toHex(
+                getPublicKeyBytesForShortSignaturesLikeHerumi(
+                    fromHex("7cff99bd671502db7d15bc8abc0c9a804fb925406fbdd50f1e4c17a4cd774247"),
+                ),
+            ),
+            "e7beaa95b3877f47348df4dd1cb578a4f7cabf7a20bfeefe5cdd263878ff132b765e04fef6f40c93512b666c47ed7719b8902f6c922c04247989b7137e837cc81a62e54712471c97a2ddab75aa9c2f58f813ed4c0fa722bde0ab718bff382208",
+        );
+    });
+
     it("test signing", async function () {
         const secretKeyHex = "7cff99bd671502db7d15bc8abc0c9a804fb925406fbdd50f1e4c17a4cd774247";
         const secretKey = Buffer.from(secretKeyHex, "hex");
-        const message = Buffer.from("hello", "utf8");
-        const expectedPublicKeyHex =
-            "e7beaa95b3877f47348df4dd1cb578a4f7cabf7a20bfeefe5cdd263878ff132b765e04fef6f40c93512b666c47ed7719b8902f6c922c04247989b7137e837cc81a62e54712471c97a2ddab75aa9c2f58f813ed4c0fa722bde0ab718bff382208";
-        const expectedSignatureHex =
-            "84fd0a3a9d4f1ea2d4b40c6da67f9b786284a1c3895b7253fec7311597cda3f757862bb0690a92a13ce612c33889fd86";
 
-        const publicKey = getPublicKeyBytesForShortSignaturesLikeHerumi(secretKey);
-        const publicKeyHex = Buffer.from(publicKey).toString("hex");
+        assert.equal(
+            toHex(signMessage(Buffer.from("hello"), secretKey)),
+            "84fd0a3a9d4f1ea2d4b40c6da67f9b786284a1c3895b7253fec7311597cda3f757862bb0690a92a13ce612c33889fd86",
+        );
 
-        const messagePoint = hashAndMapToG1PointLikeHerumi(message);
-        const signature = signMessage(messagePoint, secretKey);
-        const signatureHex = Buffer.from(signature).toString("hex");
-
-        assert.equal(publicKeyHex, expectedPublicKeyHex);
-        assert.equal(signatureHex, expectedSignatureHex);
+        assert.equal(
+            toHex(signMessage(Buffer.from("MultiversX"), secretKey)),
+            "f6e6102fae2c88c26e1194dbc8dfe7731361db65e7f927a67b51fe28db75f2cab3cefec5def449faa26af12598b5a109",
+        );
     });
 
-    it("test hashAndMapToG1LikeHerumi (1)", async function () {
-        const message = Buffer.from("aaaaaaaa", "utf8");
-        const expectedOutputHex =
-            "05339eae300f121b5f6ddd41d54e2cefaf6a07472f4a87d2f7195f97d67559910ac1ada88f616a49189670db71769f89";
+    it("test hashAndMapToG1LikeHerumi", async function () {
+        assert.equal(
+            toHex(hashAndMapToG1LikeHerumi(Buffer.from("aaaaaaaa"))),
+            "05339eae300f121b5f6ddd41d54e2cefaf6a07472f4a87d2f7195f97d67559910ac1ada88f616a49189670db71769f89",
+        );
 
-        const output = hashAndMapToG1LikeHerumi(message);
-        const outputHex = Buffer.from(output).toString("hex");
+        assert.equal(
+            toHex(hashAndMapToG1LikeHerumi(Buffer.from("hello"))),
+            "a1ddb026e51f6e477354f63b8b3cb59af7bf6da8e8a61685ab8c83c3c572ef801824318a45d97fc961fc6229ba18428e",
+        );
 
-        assert.equal(outputHex, expectedOutputHex);
-    });
+        assert.equal(
+            toHex(hashAndMapToG1LikeHerumi(Buffer.from("world"))),
+            "c68a746ae5f5675f2f146baaf1126d5355d00006fcaf24bc47ba328cb0e73e4ed4ebc53283c8a0ae5d01023ee1fe8587",
+        );
 
-    it("test hashAndMapToG1LikeHerumi (2)", async function () {
-        const message = Buffer.from("hello", "utf8");
-        const expectedOutputHex =
-            "a1ddb026e51f6e477354f63b8b3cb59af7bf6da8e8a61685ab8c83c3c572ef801824318a45d97fc961fc6229ba18428e";
+        assert.equal(
+            toHex(hashAndMapToG1LikeHerumi(Buffer.from("this is a message"))),
+            "d99081a371bef2d6d747b1fea440e377365293a3d2a8cd0529ddab837360184fcc04453e5cea19fdd8d320ee81b44d97",
+        );
 
-        const output = hashAndMapToG1LikeHerumi(message);
-        const outputHex = Buffer.from(output).toString("hex");
+        assert.equal(
+            toHex(hashAndMapToG1LikeHerumi(Buffer.from("MultiversX"))),
+            "39f547f252c481ff9f1b465bdb335d03c4e430c8f3da4941a90beb30538b0faf1d240aa5e7fa30c44b738326a2035b18",
+        );
 
-        assert.equal(outputHex, expectedOutputHex);
-    });
+        assert.equal(
+            toHex(hashAndMapToG1LikeHerumi(Buffer.from("SDK-JS"))),
+            "43df809a75f7153cebcc6346701c9c28319456ec9e9dbd39a46e797b07ca6e9145ff15c5c1483868dd57ccc0a8ff2b99",
+        );
 
-    it("test hashAndMapToG1LikeHerumi (3)", async function () {
-        const message = Buffer.from("world", "utf8");
-        const expectedOutputHex =
-            "c68a746ae5f5675f2f146baaf1126d5355d00006fcaf24bc47ba328cb0e73e4ed4ebc53283c8a0ae5d01023ee1fe8587";
-
-        const output = hashAndMapToG1LikeHerumi(message);
-        const outputHex = Buffer.from(output).toString("hex");
-
-        assert.equal(outputHex, expectedOutputHex);
-    });
-
-    it("test hashAndMapToG1LikeHerumi (4)", async function () {
-        const message = Buffer.from("this is a message", "utf8");
-        const expectedOutputHex =
-            "d99081a371bef2d6d747b1fea440e377365293a3d2a8cd0529ddab837360184fcc04453e5cea19fdd8d320ee81b44d97";
-
-        const output = hashAndMapToG1LikeHerumi(message);
-        const outputHex = Buffer.from(output).toString("hex");
-
-        assert.equal(outputHex, expectedOutputHex);
-    });
-
-    it("test hashAndMapToG1LikeHerumi (5)", async function () {
-        const message = Buffer.from("MultiversX", "utf8");
-        const expectedOutputHex =
-            "39f547f252c481ff9f1b465bdb335d03c4e430c8f3da4941a90beb30538b0faf1d240aa5e7fa30c44b738326a2035b18";
-
-        const output = hashAndMapToG1LikeHerumi(message);
-        const outputHex = Buffer.from(output).toString("hex");
-
-        assert.equal(outputHex, expectedOutputHex);
-    });
-
-    it("test hashAndMapToG1LikeHerumi (6)", async function () {
-        const message = Buffer.from("SDK-JS", "utf8");
-        const expectedOutputHex =
-            "43df809a75f7153cebcc6346701c9c28319456ec9e9dbd39a46e797b07ca6e9145ff15c5c1483868dd57ccc0a8ff2b99";
-
-        const output = hashAndMapToG1LikeHerumi(message);
-        const outputHex = Buffer.from(output).toString("hex");
-
-        assert.equal(outputHex, expectedOutputHex);
-    });
-
-    it("test hashAndMapToG1LikeHerumi (7)", async function () {
-        const message = Buffer.from("lorem ipsum", "utf8");
-        const expectedOutputHex =
-            "3f456ad872e39d35b857031bb5328f9b1515e5d00d94db210b510e0f83064961c30dbe8fcf7304a298622d857952c682";
-
-        const output = hashAndMapToG1LikeHerumi(message);
-        const outputHex = Buffer.from(output).toString("hex");
-
-        assert.equal(outputHex, expectedOutputHex);
+        assert.equal(
+            toHex(hashAndMapToG1LikeHerumi(Buffer.from("lorem ipsum"))),
+            "3f456ad872e39d35b857031bb5328f9b1515e5d00d94db210b510e0f83064961c30dbe8fcf7304a298622d857952c682",
+        );
     });
 
     it("test sha512", async function () {
@@ -117,29 +83,16 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
         );
     });
 
-    it("test setArrayMaskLikeHerumi (1)", async function () {
-        const inputHex =
-            "f74f2603939a53656948480ce71f1ce466685b6654fd22c61c1f2ce4e2c96d1cd02d162b560c4beaf1ae45f3471dc5cbc1ce040701c0b5c38457988aa00fe97f";
-        const expectedOutputHex =
-            "f74f2603939a53656948480ce71f1ce466685b6654fd22c61c1f2ce4e2c96d1cd02d162b560c4beaf1ae45f3471dc50b";
+    it("test setArrayMaskLikeHerumi", async function () {
+        assert.equal(
+            toHex(setArrayMaskLikeHerumi(sha512(Buffer.from("aaaaaaaa")))),
+            "f74f2603939a53656948480ce71f1ce466685b6654fd22c61c1f2ce4e2c96d1cd02d162b560c4beaf1ae45f3471dc50b",
+        );
 
-        const input = Buffer.from(inputHex, "hex");
-        const output = setArrayMaskLikeHerumi(input);
-        const outputHex = Buffer.from(output).toString("hex");
-
-        assert.equal(outputHex, expectedOutputHex);
-    });
-
-    it("test setArrayMaskLikeHerumi (2)", async function () {
-        const inputHex = Buffer.from(sha512(Buffer.from("hello", "utf8"))).toString("hex");
-        const expectedOutputHex =
-            "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c50a";
-
-        const input = Buffer.from(inputHex, "hex");
-        const output = setArrayMaskLikeHerumi(input);
-        const outputHex = Buffer.from(output).toString("hex");
-
-        assert.equal(outputHex, expectedOutputHex);
+        assert.equal(
+            toHex(setArrayMaskLikeHerumi(sha512(Buffer.from("hello")))),
+            "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c50a",
+        );
     });
 
     it("test calcBNComputeWLikeHerumi", async function () {
@@ -249,6 +202,19 @@ function setupG2GeneratorPointsLikeHerumi() {
     (<any>nobleBls).G2.CURVE.Gy.c1 = BigInt(
         "0x19e96417debc6d686aead20955eacc0c18fa0ec8162a32f18e5e390bee6bc4f3c80be4ba018d7f6b488f2445de040696",
     );
+}
+
+function signMessage(message: Uint8Array, secretKey: Uint8Array): Uint8Array {
+    const messagePoint = hashAndMapToG1PointLikeHerumi(message);
+    return doSignMessage(messagePoint, secretKey);
+}
+
+function doSignMessage(messagePoint: any, secretKey: Uint8Array): Uint8Array {
+    const secretKeyReversed = Buffer.from(secretKey).reverse();
+    const scalar = G1.normPrivateKeyToScalar(secretKeyReversed);
+    const signaturePoint = messagePoint.multiply(scalar);
+    const signature = projectivePointToBytesLikeHerumi(signaturePoint);
+    return signature;
 }
 
 // Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/bn.hpp#L2122
@@ -509,10 +475,10 @@ function getPublicKeyBytesForShortSignaturesLikeHerumi(secretKeyBytes: Uint8Arra
     return publicKeyReversed.subarray(96);
 }
 
-function signMessage(messagePoint: any, secretKey: Uint8Array): Uint8Array {
-    const secretKeyReversed = Buffer.from(secretKey).reverse();
-    const scalar = G1.normPrivateKeyToScalar(secretKeyReversed);
-    const signaturePoint = messagePoint.multiply(scalar);
-    const signature = projectivePointToBytesLikeHerumi(signaturePoint);
-    return signature;
+function fromHex(input: string): Uint8Array {
+    return Buffer.from(input, "hex");
+}
+
+function toHex(input: Uint8Array): string {
+    return Buffer.from(input).toString("hex");
 }
