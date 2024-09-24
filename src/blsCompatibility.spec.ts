@@ -9,7 +9,7 @@ const G1 = nobleBls.G1;
 describe.only("test BLS compatibility (noble crypto and herumi)", () => {
     it("test BLS implementations", async function () {});
 
-    it("test hashAndMapToG1LikeHerumi", async function () {
+    it("test hashAndMapToG1LikeHerumi (1)", async function () {
         const message = Buffer.from("aaaaaaaa", "utf8");
         const expectedOutputHex =
             "05339eae300f121b5f6ddd41d54e2cefaf6a07472f4a87d2f7195f97d67559910ac1ada88f616a49189670db71769f89";
@@ -20,11 +20,63 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
         assert.equal(outputHex, expectedOutputHex);
     });
 
-    it("test setArrayMaskLikeHerumi", async function () {
+    it("test hashAndMapToG1LikeHerumi (2)", async function () {
+        const message = Buffer.from("hello", "utf8");
+        const expectedOutputHex =
+            "a1ddb026e51f6e477354f63b8b3cb59af7bf6da8e8a61685ab8c83c3c572ef801824318a45d97fc961fc6229ba18428e";
+
+        const output = hashAndMapToG1LikeHerumi(message);
+        const outputHex = Buffer.from(output).toString("hex");
+
+        assert.equal(outputHex, expectedOutputHex);
+    });
+
+    it("test hashAndMapToG1LikeHerumi (3)", async function () {
+        const message = Buffer.from("world", "utf8");
+        const expectedOutputHex =
+            "c68a746ae5f5675f2f146baaf1126d5355d00006fcaf24bc47ba328cb0e73e4ed4ebc53283c8a0ae5d01023ee1fe8587";
+
+        const output = hashAndMapToG1LikeHerumi(message);
+        const outputHex = Buffer.from(output).toString("hex");
+
+        assert.equal(outputHex, expectedOutputHex);
+    });
+
+    it("test hashAndMapToG1LikeHerumi (4)", async function () {
+        const message = Buffer.from("this is a message", "utf8");
+        const expectedOutputHex =
+            "d99081a371bef2d6d747b1fea440e377365293a3d2a8cd0529ddab837360184fcc04453e5cea19fdd8d320ee81b44d97";
+
+        const output = hashAndMapToG1LikeHerumi(message);
+        const outputHex = Buffer.from(output).toString("hex");
+
+        assert.equal(outputHex, expectedOutputHex);
+    });
+
+    it("test sha512", async function () {
+        assert.equal(
+            Buffer.from(sha512("hello")).toString("hex"),
+            "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043",
+        );
+    });
+
+    it("test setArrayMaskLikeHerumi (1)", async function () {
         const inputHex =
             "f74f2603939a53656948480ce71f1ce466685b6654fd22c61c1f2ce4e2c96d1cd02d162b560c4beaf1ae45f3471dc5cbc1ce040701c0b5c38457988aa00fe97f";
         const expectedOutputHex =
             "f74f2603939a53656948480ce71f1ce466685b6654fd22c61c1f2ce4e2c96d1cd02d162b560c4beaf1ae45f3471dc50b";
+
+        const input = Buffer.from(inputHex, "hex");
+        const output = setArrayMaskLikeHerumi(input);
+        const outputHex = Buffer.from(output).toString("hex");
+
+        assert.equal(outputHex, expectedOutputHex);
+    });
+
+    it("test setArrayMaskLikeHerumi (2)", async function () {
+        const inputHex = Buffer.from(sha512(Buffer.from("hello", "utf8"))).toString("hex");
+        const expectedOutputHex =
+            "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c50a";
 
         const input = Buffer.from(inputHex, "hex");
         const output = setArrayMaskLikeHerumi(input);
@@ -199,9 +251,9 @@ function calcBNLoopLikeHerumi(w: bigint, t: bigint): any {
         if (i == 0) {
             x = calcBNLoopLikeHerumiIteration0(w, t);
         } else if (i === 1) {
-            x = calcBNLoopLikeHerumiIteration1();
+            x = calcBNLoopLikeHerumiIteration1(x);
         } else if (i === 2) {
-            x = calcBNLoopLikeHerumiIteration2();
+            x = calcBNLoopLikeHerumiIteration2(w);
         }
 
         // Herumi code: G::getWeierstrass(y, x);
@@ -236,19 +288,33 @@ function calcBNLoopLikeHerumiIteration0(w: bigint, t: bigint): bigint {
     // *x.getFp0() += c2_;
     let x = Fp.mul(t, w);
     x = Fp.neg(x);
-
-    // TODO: is addition correct?
     x += c2;
 
     return x;
 }
 
-function calcBNLoopLikeHerumiIteration1(): bigint {
-    return BigInt(0);
+function calcBNLoopLikeHerumiIteration1(x: bigint): bigint {
+    // Herumi code:
+    // F::neg(x, x);
+    // *x.getFp0() -= Fp::one();
+
+    x = Fp.neg(x);
+    x -= Fp.ONE;
+
+    return x;
 }
 
-function calcBNLoopLikeHerumiIteration2(): bigint {
-    return BigInt(0);
+function calcBNLoopLikeHerumiIteration2(w: bigint): bigint {
+    // Herumi code:
+    // F::sqr(x, w);
+    // F::inv(x, x);
+    // *x.getFp0() += Fp::one();
+
+    let x = Fp.sqr(w);
+    x = Fp.inv(x);
+    x += Fp.ONE;
+
+    return x;
 }
 
 // Herumi code: (?)
