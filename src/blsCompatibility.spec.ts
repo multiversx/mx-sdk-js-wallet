@@ -1,3 +1,4 @@
+import { FpLegendre, isNegativeLE } from "@noble/curves/abstract/modular";
 import * as nobleUtils from "@noble/curves/abstract/utils";
 import { bls12_381 as nobleBls } from "@noble/curves/bls12-381";
 import { sha512 } from "@noble/hashes/sha512";
@@ -46,6 +47,39 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
         const message = Buffer.from("this is a message", "utf8");
         const expectedOutputHex =
             "d99081a371bef2d6d747b1fea440e377365293a3d2a8cd0529ddab837360184fcc04453e5cea19fdd8d320ee81b44d97";
+
+        const output = hashAndMapToG1LikeHerumi(message);
+        const outputHex = Buffer.from(output).toString("hex");
+
+        assert.equal(outputHex, expectedOutputHex);
+    });
+
+    it("test hashAndMapToG1LikeHerumi (5)", async function () {
+        const message = Buffer.from("MultiversX", "utf8");
+        const expectedOutputHex =
+            "39f547f252c481ff9f1b465bdb335d03c4e430c8f3da4941a90beb30538b0faf1d240aa5e7fa30c44b738326a2035b18";
+
+        const output = hashAndMapToG1LikeHerumi(message);
+        const outputHex = Buffer.from(output).toString("hex");
+
+        assert.equal(outputHex, expectedOutputHex);
+    });
+
+    it("test hashAndMapToG1LikeHerumi (6)", async function () {
+        const message = Buffer.from("SDK-JS", "utf8");
+        const expectedOutputHex =
+            "43df809a75f7153cebcc6346701c9c28319456ec9e9dbd39a46e797b07ca6e9145ff15c5c1483868dd57ccc0a8ff2b99";
+
+        const output = hashAndMapToG1LikeHerumi(message);
+        const outputHex = Buffer.from(output).toString("hex");
+
+        assert.equal(outputHex, expectedOutputHex);
+    });
+
+    it("test hashAndMapToG1LikeHerumi (7)", async function () {
+        const message = Buffer.from("lorem ipsum", "utf8");
+        const expectedOutputHex =
+            "3f456ad872e39d35b857031bb5328f9b1515e5d00d94db210b510e0f83064961c30dbe8fcf7304a298622d857952c682";
 
         const output = hashAndMapToG1LikeHerumi(message);
         const outputHex = Buffer.from(output).toString("hex");
@@ -125,6 +159,44 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
         const outputHex = Buffer.from(nobleUtils.numberToBytesLE(output, Fp.BYTES)).toString("hex");
 
         assert.equal(outputHex, expectedOutputHex);
+    });
+
+    it("test legendreLikeHerumi", async function () {
+        assert.equal(
+            legendreLikeHerumi(
+                BigInt(
+                    "1947061557619909257923000199957305913149841919217032399369035888886860867324583869022231864956010426593339565155799",
+                ),
+            ),
+            1,
+        );
+
+        assert.equal(
+            legendreLikeHerumi(
+                BigInt(
+                    "2287818845157091648072502000506798783829628305119603561063065856040047081993849512757193454722385904601543331168919",
+                ),
+            ),
+            -1,
+        );
+
+        assert.equal(
+            legendreLikeHerumi(
+                BigInt(
+                    "2070452443764583481186658592096648212376618667920360235487557759555714167455481586459773229376884059003467086956271",
+                ),
+            ),
+            1,
+        );
+
+        assert.equal(
+            legendreLikeHerumi(
+                BigInt(
+                    "3066392673129170662178293883062051604774809620215180153438624189323843912738694122128372094104009713090321523946449",
+                ),
+            ),
+            -1,
+        );
     });
 
     it("test getWeierstrassLikeHerumi", async function () {
@@ -207,25 +279,24 @@ function calcBNLikeHerumi(t: Uint8Array): any {
 function calcBNComputeWLikeHerumi(t: bigint): bigint {
     const { c1 } = getHerumiConstants();
 
-    // TODO how to compare with zero?
-    // if (tAsBigInt == 0n) {
-    //     throw new Error("tAsBigInt == 0");
-    // }
+    // Herumi code: if (t.isZero()) return false;
+    if (Fp.eql(t, Fp.ZERO)) {
+        throw new Error("t == 0");
+    }
 
     // Herumi code: F::sqr(w, t);
     let w = Fp.sqr(t);
 
     // Herumi code: w += G::b_;
-    // TODO: WHY NOT ADD AS BELOW?
     w += G1.CURVE.b;
 
     // Herumi code: *w.getFp0() += Fp::one();
     w = Fp.add(w, Fp.ONE);
 
-    // TODO how to compare with zero?
-    // if (w == 0n) {
-    //     throw new Error("w == 0");
-    // }
+    // Herumi code: if (w.isZero()) return false;
+    if (Fp.eql(w, Fp.ZERO)) {
+        throw new Error("w == 0");
+    }
 
     // Herumi code: F::inv(w, w);
     w = Fp.inv(w);
@@ -244,7 +315,6 @@ function calcBNLoopLikeHerumi(w: bigint, t: bigint): any {
     let y = BigInt(0);
 
     const legendreOfT = legendreLikeHerumi(t);
-    // TODO: Check if this is correct
     const legendreOfTIsNegative = legendreOfT < 0;
 
     for (let i = 0; i < 3; i++) {
@@ -317,9 +387,20 @@ function calcBNLoopLikeHerumiIteration2(w: bigint): bigint {
     return x;
 }
 
-// Herumi code: (?)
-function legendreLikeHerumi(_t: bigint): number {
-    // Not implemented. Find alternative in Noble Crypto.
+function legendreLikeHerumi(x: bigint): number {
+    let f = Fp;
+
+    const legendre = FpLegendre(f.ORDER);
+    const legendreSymbol = legendre(f, x);
+
+    if (f.eql(legendreSymbol, f.ZERO)) {
+        return 0;
+    }
+
+    if (f.eql(legendreSymbol, f.ONE)) {
+        return 1;
+    }
+
     return -1;
 }
 
@@ -367,7 +448,12 @@ function getHerumiConstants() {
 // See: https://github.com/paulmillr/noble-curves/blob/1.6.0/src/bls12-381.ts#L382
 function projectivePointToBytesLikeHerumi(point: any): Uint8Array {
     const bytesCompressed = nobleUtils.numberToBytesBE(point.px, Fp.BYTES);
-    bytesCompressed[0] |= 0b1000_0000;
+
+    // Question for review: is this correct? We set the "compressed" flag for negative y values.
+    if (isNegativeLE(point.py, Fp.ORDER)) {
+        bytesCompressed[0] |= 0b1000_0000;
+    }
+
     bytesCompressed.reverse();
     return bytesCompressed;
 }
