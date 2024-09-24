@@ -47,6 +47,21 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
         assert.equal(outputHex, expectedOutputHex);
     });
 
+    it("test calcBNLoopLikeHerumi", async function () {
+        const wHex = "340d1f61a8fff391e13cf5766327816f7468dbedb2f406e3dbcd629b555baacbc0b4ec07d26fea51f744498540683206";
+        const tHex = "f74f2603939a53656948480ce71f1ce466685b6654fd22c61c1f2ce4e2c96d1cd02d162b560c4beaf1ae45f3471dc50b";
+        const expectedOutputHex =
+            "b14695c802ca943acc28d5e47aec2ce163d3004559fc9d2e1659f5f22ca363f96548e504a6f2b9cab57bcce75c4e9389";
+
+        const w = nobleUtils.bytesToNumberLE(Buffer.from(wHex, "hex"));
+        const t = nobleUtils.bytesToNumberLE(Buffer.from(tHex, "hex"));
+
+        const output = calcBNLoopLikeHerumi(w, t);
+        const outputHex = Buffer.from(projectivePointToBytesLikeHerumi(output)).toString("hex");
+
+        assert.equal(outputHex, expectedOutputHex);
+    });
+
     it("test calcBNLoopLikeHerumiIteration0", async function () {
         const wHex = "340d1f61a8fff391e13cf5766327816f7468dbedb2f406e3dbcd629b555baacbc0b4ec07d26fea51f744498540683206";
         const tHex = "f74f2603939a53656948480ce71f1ce466685b6654fd22c61c1f2ce4e2c96d1cd02d162b560c4beaf1ae45f3471dc50b";
@@ -149,6 +164,46 @@ function calcBNComputeWLikeHerumi(t: bigint): bigint {
     return w;
 }
 
+function calcBNLoopLikeHerumi(w: bigint, t: bigint): any {
+    let x = BigInt(0);
+    let y = BigInt(0);
+
+    const legendreOfT = legendreLikeHerumi(t);
+    // TODO: Check if this is correct
+    const legendreOfTIsNegative = legendreOfT < 0;
+
+    for (let i = 0; i < 3; i++) {
+        if (i == 0) {
+            x = calcBNLoopLikeHerumiIteration0(w, t);
+        } else if (i === 1) {
+            x = calcBNLoopLikeHerumiIteration1();
+        } else if (i === 2) {
+            x = calcBNLoopLikeHerumiIteration2();
+        }
+
+        // Herumi code: G::getWeierstrass(y, x);
+        y = getWeierstrassLikeHerumi(x);
+
+        // Herumi code: if (F::squareRoot(y, y)) { ... }
+        try {
+            y = Fp.sqrt(y);
+        } catch (e) {
+            // No solution, go to next iteration.
+            continue;
+        }
+
+        if (legendreOfTIsNegative) {
+            // Herumi code: F::neg(y, y)
+            y = Fp.neg(y);
+        }
+
+        // Herumi code: P.set(& b, x, y, false);
+        return new G1.ProjectivePoint(x, y, BigInt(1));
+    }
+
+    throw new Error("Cannot calcBNLoopLikeHerumi");
+}
+
 function calcBNLoopLikeHerumiIteration0(w: bigint, t: bigint): bigint {
     const { c2 } = getHerumiConstants();
 
@@ -216,4 +271,14 @@ function getHerumiConstants() {
     const c2 = nobleUtils.bytesToNumberLE(c2Bytes);
 
     return { c1, c2 };
+}
+
+// We don't directly use Noble Crypto's toBytes(), since that handles not only the "compressed" flag, but also the flags "infinity" and "sort",
+// which aren't handled in Herumi's implementation.
+// See: https://github.com/paulmillr/noble-curves/blob/1.6.0/src/bls12-381.ts#L382
+function projectivePointToBytesLikeHerumi(point: any): Uint8Array {
+    const bytesCompressed = nobleUtils.numberToBytesBE(point.px, Fp.BYTES);
+    bytesCompressed[0] |= 0b1000_0000;
+    bytesCompressed.reverse();
+    return bytesCompressed;
 }
