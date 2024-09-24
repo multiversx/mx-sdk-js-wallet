@@ -6,9 +6,32 @@ import { assert } from "chai";
 
 const Fp = nobleBls.fields.Fp;
 const G1 = nobleBls.G1;
+const G2 = nobleBls.G2;
 
 describe.only("test BLS compatibility (noble crypto and herumi)", () => {
-    it("test BLS implementations", async function () {});
+    before(() => {
+        setupG2GeneratorPointsLikeHerumi();
+    });
+
+    it("test signing", async function () {
+        const secretKeyHex = "7cff99bd671502db7d15bc8abc0c9a804fb925406fbdd50f1e4c17a4cd774247";
+        const secretKey = Buffer.from(secretKeyHex, "hex");
+        const message = Buffer.from("hello", "utf8");
+        const expectedPublicKeyHex =
+            "e7beaa95b3877f47348df4dd1cb578a4f7cabf7a20bfeefe5cdd263878ff132b765e04fef6f40c93512b666c47ed7719b8902f6c922c04247989b7137e837cc81a62e54712471c97a2ddab75aa9c2f58f813ed4c0fa722bde0ab718bff382208";
+        const expectedSignatureHex =
+            "84fd0a3a9d4f1ea2d4b40c6da67f9b786284a1c3895b7253fec7311597cda3f757862bb0690a92a13ce612c33889fd86";
+
+        const publicKey = getPublicKeyBytesForShortSignaturesLikeHerumi(secretKey);
+        const publicKeyHex = Buffer.from(publicKey).toString("hex");
+
+        const messagePoint = hashAndMapToG1PointLikeHerumi(message);
+        const signature = signMessage(messagePoint, secretKey);
+        const signatureHex = Buffer.from(signature).toString("hex");
+
+        assert.equal(publicKeyHex, expectedPublicKeyHex);
+        assert.equal(signatureHex, expectedSignatureHex);
+    });
 
     it("test hashAndMapToG1LikeHerumi (1)", async function () {
         const message = Buffer.from("aaaaaaaa", "utf8");
@@ -212,13 +235,34 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
     });
 });
 
+function setupG2GeneratorPointsLikeHerumi() {
+    (<any>nobleBls).G2.CURVE.Gx.c0 = BigInt(
+        "0xf3d011af81acf00140aab3c122c61bbdf0628db81c37664bdfc828163ce074ee33a1a5ce5488556603bc5d8d9f21ecc",
+    );
+    (<any>nobleBls).G2.CURVE.Gx.c1 = BigInt(
+        "0x171df7a5080f908a16c2658ea90164e28c924c3f0e6655f6d82adca6bfbdfb5f9efca82c1609676fa15cd30396f1a4b3",
+    );
+
+    (<any>nobleBls).G2.CURVE.Gy.c0 = BigInt(
+        "0x738a4db169d33b52ecdf6470030add6488ec3e8fc746734b9107c5315b6352675479f364fc210e5e46857278215abd1",
+    );
+    (<any>nobleBls).G2.CURVE.Gy.c1 = BigInt(
+        "0x19e96417debc6d686aead20955eacc0c18fa0ec8162a32f18e5e390bee6bc4f3c80be4ba018d7f6b488f2445de040696",
+    );
+}
+
 // Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/bn.hpp#L2122
 function hashAndMapToG1LikeHerumi(message: Uint8Array): Uint8Array {
+    const point = hashAndMapToG1PointLikeHerumi(message);
+    const pointBytes = projectivePointToBytesLikeHerumi(point);
+    return pointBytes;
+}
+
+function hashAndMapToG1PointLikeHerumi(message: Uint8Array): any {
     const hash = sha512(message);
     const hashMasked = setArrayMaskLikeHerumi(hash);
     const point = mapToG1LikeHerumi(hashMasked);
-    const pointBytes = projectivePointToBytesLikeHerumi(point);
-    return pointBytes;
+    return point;
 }
 
 // Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/fp.hpp#L371
@@ -456,4 +500,19 @@ function projectivePointToBytesLikeHerumi(point: any): Uint8Array {
 
     bytesCompressed.reverse();
     return bytesCompressed;
+}
+
+function getPublicKeyBytesForShortSignaturesLikeHerumi(secretKeyBytes: Uint8Array): Uint8Array {
+    const secretKeyReversed = Buffer.from(secretKeyBytes).reverse();
+    const publicKey = G2.ProjectivePoint.fromPrivateKey(secretKeyReversed).toRawBytes(false);
+    const publicKeyReversed = Buffer.from(publicKey).reverse();
+    return publicKeyReversed.subarray(96);
+}
+
+function signMessage(messagePoint: any, secretKey: Uint8Array): Uint8Array {
+    const secretKeyReversed = Buffer.from(secretKey).reverse();
+    const scalar = G1.normPrivateKeyToScalar(secretKeyReversed);
+    const signaturePoint = messagePoint.multiply(scalar);
+    const signature = projectivePointToBytesLikeHerumi(signaturePoint);
+    return signature;
 }
