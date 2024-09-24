@@ -9,14 +9,13 @@ const G1 = nobleBls.G1;
 describe.only("test BLS compatibility (noble crypto and herumi)", () => {
     it("test BLS implementations", async function () {});
 
-    it("test getWeierstrassLikeHerumi", async function () {
-        const inputHex =
-            "b14695c802ca943acc28d5e47aec2ce163d3004559fc9d2e1659f5f22ca363f96548e504a6f2b9cab57bcce75c4e9309";
+    it("test hashAndMapToG1LikeHerumi", async function () {
+        const message = Buffer.from("aaaaaaaa", "utf8");
         const expectedOutputHex =
-            "fd15a70e718737b6457701e2c134b254d797837f7166300f46360974e3b51ac4d679f7de76d488d52da1c13a3f1bb719";
-        const input = nobleUtils.bytesToNumberLE(Buffer.from(inputHex, "hex"));
-        const output = getWeierstrassLikeHerumi(input);
-        const outputHex = Buffer.from(nobleUtils.numberToBytesLE(output, Fp.BYTES)).toString("hex");
+            "05339eae300f121b5f6ddd41d54e2cefaf6a07472f4a87d2f7195f97d67559910ac1ada88f616a49189670db71769f89";
+
+        const output = hashAndMapToG1LikeHerumi(message);
+        const outputHex = Buffer.from(output).toString("hex");
 
         assert.equal(outputHex, expectedOutputHex);
     });
@@ -75,13 +74,27 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
 
         assert.equal(outputHex, expectedOutputHex);
     });
+
+    it("test getWeierstrassLikeHerumi", async function () {
+        const inputHex =
+            "b14695c802ca943acc28d5e47aec2ce163d3004559fc9d2e1659f5f22ca363f96548e504a6f2b9cab57bcce75c4e9309";
+        const expectedOutputHex =
+            "fd15a70e718737b6457701e2c134b254d797837f7166300f46360974e3b51ac4d679f7de76d488d52da1c13a3f1bb719";
+        const input = nobleUtils.bytesToNumberLE(Buffer.from(inputHex, "hex"));
+        const output = getWeierstrassLikeHerumi(input);
+        const outputHex = Buffer.from(nobleUtils.numberToBytesLE(output, Fp.BYTES)).toString("hex");
+
+        assert.equal(outputHex, expectedOutputHex);
+    });
 });
 
 // Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/bn.hpp#L2122
-function hashAndMapToG1LikeHerumi(message: Uint8Array) {
+function hashAndMapToG1LikeHerumi(message: Uint8Array): Uint8Array {
     const hash = sha512(message);
     const hashMasked = setArrayMaskLikeHerumi(hash);
-    return mapToG1LikeHerumi(hashMasked);
+    const point = mapToG1LikeHerumi(hashMasked);
+    const pointBytes = projectivePointToBytesLikeHerumi(point);
+    return pointBytes;
 }
 
 // Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/fp.hpp#L371
@@ -116,17 +129,27 @@ function setArrayMaskLikeHerumi(x: Uint8Array): Uint8Array {
     return nobleUtils.numberToBytesLE(xAsBigInt, Fp.BYTES);
 }
 
-function mapToG1LikeHerumi(t: Uint8Array) {
-    return calcBNLikeHerumi(t);
+function mapToG1LikeHerumi(t: Uint8Array): any {
+    // Herumi code: mapToEc(P, t)                   // https://github.com/herumi/mcl/blob/v2.00/include/mcl/bn.hpp#L599
+    //                  >> calcBN<G, F>(P, t)       // https://github.com/herumi/mcl/blob/v2.00/include/mcl/bn.hpp#L565
+    let P = calcBNLikeHerumi(t);
+
+    // Herumi code: mulByCofactor(P);                           // https://github.com/herumi/mcl/blob/v2.00/include/mcl/bn.hpp#L600
+    //              >>  G1::mulGeneric(Q, P, cofactor_);        // https://github.com/herumi/mcl/blob/v2.00/include/mcl/bn.hpp#L430
+    P = P.multiply(G1.CURVE.h);
+
+    return P;
 }
 
 // Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/bn.hpp#L362
 // "Indifferentiable hashing to Barreto Naehrig curves" by Pierre-Alain Fouque and Mehdi Tibouchi
 // https://www.di.ens.fr/~fouque/pub/latincrypt12.pdf
-function calcBNLikeHerumi(t: Uint8Array) {
+function calcBNLikeHerumi(t: Uint8Array): any {
     let tAsBigInt = nobleUtils.bytesToNumberLE(t);
 
     const w = calcBNComputeWLikeHerumi(tAsBigInt);
+    const P = calcBNLoopLikeHerumi(w, tAsBigInt);
+    return P;
 }
 
 function calcBNComputeWLikeHerumi(t: bigint): bigint {
