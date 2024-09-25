@@ -5,6 +5,7 @@ import { sha512 } from "@noble/hashes/sha512";
 import { assert } from "chai";
 
 const Fp = nobleBls.fields.Fp;
+const Fp12 = nobleBls.fields.Fp12;
 const G1 = nobleBls.G1;
 const G2 = nobleBls.G2;
 
@@ -24,7 +25,7 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
         );
     });
 
-    it("test signing", async function () {
+    it("test sign", async function () {
         const secretKeyHex = "7cff99bd671502db7d15bc8abc0c9a804fb925406fbdd50f1e4c17a4cd774247";
         const secretKey = Buffer.from(secretKeyHex, "hex");
 
@@ -466,6 +467,21 @@ function projectivePointToBytesLikeHerumi(point: any): Uint8Array {
 
     bytesCompressed.reverse();
     return bytesCompressed;
+}
+// We cannot directly use Noble Crypto's verifyShortSignatureLikeHerumi(), since that performs its own (standard) hashing and mapping to G1.
+// See: https://github.com/paulmillr/noble-curves/blob/main/src/abstract/bls.ts#L420
+function verifyShortSignatureLikeHerumi(signaturePoint: any, messagePoint: any, publicKeyPoint: any): boolean {
+    const P = publicKeyPoint;
+    const Hm = messagePoint;
+    const G = G2.ProjectivePoint.BASE;
+    const S = signaturePoint;
+
+    const exp = nobleBls.pairingBatch([
+        { g1: Hm, g2: P }, // eHmP = pairing(Hm, P, false);
+        { g1: S, g2: G.negate() }, // eSG = pairing(S, G.negate(), false);
+    ]);
+
+    return Fp12.eql(exp, Fp12.ONE);
 }
 
 function getPublicKeyBytesForShortSignaturesLikeHerumi(secretKeyBytes: Uint8Array): Uint8Array {
