@@ -84,6 +84,56 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
             "6847485e9cb0ce069825f492071188f616b32a65e2596f078b15a6c0a2d6033206ea42b621cad0559aea9797f1918691",
         );
     });
+
+    it("test verify (works)", async function () {
+        assert.isTrue(
+            verifySignature(
+                fromHex(
+                    "84fd0a3a9d4f1ea2d4b40c6da67f9b786284a1c3895b7253fec7311597cda3f757862bb0690a92a13ce612c33889fd86",
+                ),
+                Buffer.from("hello"),
+                fromHex(
+                    "e7beaa95b3877f47348df4dd1cb578a4f7cabf7a20bfeefe5cdd263878ff132b765e04fef6f40c93512b666c47ed7719b8902f6c922c04247989b7137e837cc81a62e54712471c97a2ddab75aa9c2f58f813ed4c0fa722bde0ab718bff382208",
+                ),
+            ),
+        );
+
+        assert.isTrue(
+            verifySignature(
+                fromHex(
+                    "aace25fd4beb6626ff1772f12b61861434d02c4c5c6ae8090befc557765d5f46f319ff229acbfc6783363c496af3de06",
+                ),
+                Buffer.from("message to be signed"),
+                fromHex(
+                    "f69e71a3f99a3c3ec5454183b33ea776a9e69cbecca81c13218d3f6becb2deeb258e6210e097c6c04d8ff7573a4bd102ca22fd1aee8dac6eba495f2d24849b28cfbafdf748ed33195abd34212bdbb5ca53e21cee30d966e5c11895fd31f51f16",
+                ),
+            ),
+        );
+    });
+
+    it("test verify (does not work yet, still debugging)", async function () {
+        // assert.isTrue(
+        //     verifySignature(
+        //         fromHex(
+        //             "f6e6102fae2c88c26e1194dbc8dfe7731361db65e7f927a67b51fe28db75f2cab3cefec5def449faa26af12598b5a109",
+        //         ),
+        //         Buffer.from("MultiversX"),
+        //         fromHex(
+        //             "e7beaa95b3877f47348df4dd1cb578a4f7cabf7a20bfeefe5cdd263878ff132b765e04fef6f40c93512b666c47ed7719b8902f6c922c04247989b7137e837cc81a62e54712471c97a2ddab75aa9c2f58f813ed4c0fa722bde0ab718bff382208",
+        //         ),
+        //     ),
+        // );
+        // assert.isTrue(
+        //     verifySignature(
+        //         fromHex(
+        //             "6847485e9cb0ce069825f492071188f616b32a65e2596f078b15a6c0a2d6033206ea42b621cad0559aea9797f1918691",
+        //         ),
+        //         Buffer.from("message to be signed"),
+        //         fromHex(
+        //             "3471540b7930bf52639acf66f8b98f73b87de782f5881d36e4c4008fd6de4214ccf1be7cbe2d8a1d4452fff453bc2416b8c7ce7ba84d34af58d20570d53aa12f6407125401dd103ffbb8a2d7f90c73639543c4e617a2da20398ad9d3a63c0010",
+        //         ),
+        //     ),
+        // );
     });
 
     it("test hashAndMapToG1LikeHerumi", async function () {
@@ -514,9 +564,24 @@ function projectivePointToBytesLikeHerumi(point: any): Uint8Array {
     bytesCompressed.reverse();
     return bytesCompressed;
 }
+
+function verifySignature(signature: Uint8Array, message: Uint8Array, publicKey: Uint8Array) {
+    const signatureReversed = Buffer.from(signature).reverse();
+    const publicKeyReversed = Buffer.from(publicKey).reverse();
+
+    publicKeyReversed[0] |= 0b1000_0000;
+    signatureReversed[0] |= 0b1000_0000;
+
+    const signaturePoint = G1.ProjectivePoint.fromHex(signatureReversed);
+    const messagePoint = hashAndMapToG1PointLikeHerumi(message);
+    const publicKeyPoint = G2.ProjectivePoint.fromHex(publicKeyReversed);
+
+    return doVerifySignature(signaturePoint, messagePoint, publicKeyPoint);
+}
+
 // We cannot directly use Noble Crypto's verifyShortSignatureLikeHerumi(), since that performs its own (standard) hashing and mapping to G1.
 // See: https://github.com/paulmillr/noble-curves/blob/main/src/abstract/bls.ts#L420
-function verifyShortSignatureLikeHerumi(signaturePoint: any, messagePoint: any, publicKeyPoint: any): boolean {
+function doVerifySignature(signaturePoint: any, messagePoint: any, publicKeyPoint: any): boolean {
     const P = publicKeyPoint;
     const Hm = messagePoint;
     const G = G2.ProjectivePoint.BASE;
