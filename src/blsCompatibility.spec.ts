@@ -15,30 +15,58 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
     });
 
     it("test get public key", async function () {
+        let { point, bytes } = { point: null, bytes: Uint8Array.from([]) };
+
+        // (1)
+        ({ point, bytes } = getPublicKeyBytesForShortSignaturesLikeHerumi(
+            fromHex("7cff99bd671502db7d15bc8abc0c9a804fb925406fbdd50f1e4c17a4cd774247"),
+        ));
+
         assert.equal(
-            toHex(
-                getPublicKeyBytesForShortSignaturesLikeHerumi(
-                    fromHex("7cff99bd671502db7d15bc8abc0c9a804fb925406fbdd50f1e4c17a4cd774247"),
-                ),
-            ),
+            toHex(bytes),
             "e7beaa95b3877f47348df4dd1cb578a4f7cabf7a20bfeefe5cdd263878ff132b765e04fef6f40c93512b666c47ed7719b8902f6c922c04247989b7137e837cc81a62e54712471c97a2ddab75aa9c2f58f813ed4c0fa722bde0ab718bff382208",
         );
 
-        assert.equal(
-            toHex(
-                getPublicKeyBytesForShortSignaturesLikeHerumi(
-                    fromHex("caffb9cb3d24451500f26def03cc034ae61978aeef702688c17ad2fd023c2837"),
-                ),
+        assert.deepEqual(
+            point,
+            new G2.ProjectivePoint(
+                {
+                    c0: BigInt(
+                        "3919955428688575730085685860036073739633787972833264583731840045036896941424552514726452428101081158274778240040679",
+                    ),
+                    c1: BigInt(
+                        "1251888271028119053185710118362018489701077424118770679065840704605207537511549798292283136162288865665846493548728",
+                    ),
+                },
+                {
+                    c0: BigInt(
+                        "766321536125856755687043939935636237469256141287091748483299451475465638283464980474140510452418505615360716159676",
+                    ),
+                    c1: BigInt(
+                        "3911964420278991987669984666792641817851437983180398415982138400848408215263068041872712430310420883567179181145852",
+                    ),
+                },
+                { c0: BigInt("1"), c1: BigInt("0") },
             ),
+        );
+
+        // (2)
+        ({ point, bytes } = getPublicKeyBytesForShortSignaturesLikeHerumi(
+            fromHex("caffb9cb3d24451500f26def03cc034ae61978aeef702688c17ad2fd023c2837"),
+        ));
+
+        assert.equal(
+            toHex(bytes),
             "f69e71a3f99a3c3ec5454183b33ea776a9e69cbecca81c13218d3f6becb2deeb258e6210e097c6c04d8ff7573a4bd102ca22fd1aee8dac6eba495f2d24849b28cfbafdf748ed33195abd34212bdbb5ca53e21cee30d966e5c11895fd31f51f16",
         );
 
+        // (3)
+        ({ point, bytes } = getPublicKeyBytesForShortSignaturesLikeHerumi(
+            fromHex("6a4451e61581d545b12390bd461bffe7ca3d28943e61647c96c5acfbe2d01721"),
+        ));
+
         assert.equal(
-            toHex(
-                getPublicKeyBytesForShortSignaturesLikeHerumi(
-                    fromHex("6a4451e61581d545b12390bd461bffe7ca3d28943e61647c96c5acfbe2d01721"),
-                ),
-            ),
+            toHex(bytes),
             "3471540b7930bf52639acf66f8b98f73b87de782f5881d36e4c4008fd6de4214ccf1be7cbe2d8a1d4452fff453bc2416b8c7ce7ba84d34af58d20570d53aa12f6407125401dd103ffbb8a2d7f90c73639543c4e617a2da20398ad9d3a63c0010",
         );
     });
@@ -143,11 +171,11 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
         );
     });
 
-    it("test bytesG1ToProjectivePoint", async function () {
+    it("test bytesToG1ProjectivePoint", async function () {
         let point = null;
 
         // (1)
-        point = bytesG1ToProjectivePoint(
+        point = bytesToG1ProjectivePoint(
             fromHex("84fd0a3a9d4f1ea2d4b40c6da67f9b786284a1c3895b7253fec7311597cda3f757862bb0690a92a13ce612c33889fd86"),
         );
 
@@ -165,7 +193,7 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
         );
 
         // (2)
-        point = bytesG1ToProjectivePoint(
+        point = bytesToG1ProjectivePoint(
             fromHex("f6e6102fae2c88c26e1194dbc8dfe7731361db65e7f927a67b51fe28db75f2cab3cefec5def449faa26af12598b5a109"),
         );
 
@@ -183,7 +211,7 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
         );
 
         // (3)
-        point = bytesG1ToProjectivePoint(
+        point = bytesToG1ProjectivePoint(
             fromHex("aace25fd4beb6626ff1772f12b61861434d02c4c5c6ae8090befc557765d5f46f319ff229acbfc6783363c496af3de06"),
         );
 
@@ -201,7 +229,7 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
         );
 
         // (4)
-        point = bytesG1ToProjectivePoint(
+        point = bytesToG1ProjectivePoint(
             fromHex("6847485e9cb0ce069825f492071188f616b32a65e2596f078b15a6c0a2d6033206ea42b621cad0559aea9797f1918691"),
         );
 
@@ -702,17 +730,39 @@ function projectivePointG1ToBytes(point: any): Uint8Array {
 }
 
 function verifySignature(signature: Uint8Array, message: Uint8Array, publicKey: Uint8Array) {
-    const signatureReversed = Buffer.from(signature).reverse();
-    const publicKeyReversed = Buffer.from(publicKey).reverse();
-
-    publicKeyReversed[0] |= 0b1000_0000;
-    signatureReversed[0] |= 0b1000_0000;
-
-    const signaturePoint = G1.ProjectivePoint.fromHex(signatureReversed);
+    const signaturePoint = bytesToG1ProjectivePoint(signature);
     const messagePoint = hashAndMapToG1PointLikeHerumi(message);
-    const publicKeyPoint = G2.ProjectivePoint.fromHex(publicKeyReversed);
+    const publicKeyBestEffort = bytesToG2ProjectivePoint(publicKey);
 
-    return doVerifySignature(signaturePoint, messagePoint, publicKeyPoint);
+    return doVerifySignature(signaturePoint, messagePoint, publicKeyBestEffort);
+}
+
+function bytesToG1ProjectivePoint(bytes: Uint8Array): any {
+    const bytesReversed = Buffer.from(bytes).reverse();
+
+    const bytesReversedWithCompressed = Buffer.from(bytesReversed);
+    bytesReversedWithCompressed[0] |= 0b1000_0000;
+
+    const bytesReversedWithCompressedAndSort = Buffer.from(bytesReversed);
+    bytesReversedWithCompressedAndSort[0] |= 0b1000_0000;
+    bytesReversedWithCompressedAndSort[0] |= 0b0010_0000;
+
+    const pointWithCompressed = G1.ProjectivePoint.fromHex(bytesReversedWithCompressed);
+    const pointWithCompressedAndSort = G1.ProjectivePoint.fromHex(bytesReversedWithCompressedAndSort);
+
+    const bytesFromPointWithCompressed = projectivePointG1ToBytes(pointWithCompressed);
+    const bytesFromPointWithCompressedAndSort = projectivePointG1ToBytes(pointWithCompressedAndSort);
+
+    if (Buffer.compare(bytes, bytesFromPointWithCompressed) == 0) {
+        return pointWithCompressed;
+    }
+
+    if (Buffer.compare(bytes, bytesFromPointWithCompressedAndSort) == 0) {
+        return pointWithCompressedAndSort;
+    }
+
+    throw new Error("Cannot do bytesG1ToProjectivePoint");
+}
 }
 
 // We cannot directly use Noble Crypto's verifyShortSignatureLikeHerumi(), since that performs its own (standard) hashing and mapping to G1.
@@ -731,11 +781,14 @@ function doVerifySignature(signaturePoint: any, messagePoint: any, publicKeyPoin
     return Fp12.eql(exp, Fp12.ONE);
 }
 
-function getPublicKeyBytesForShortSignaturesLikeHerumi(secretKeyBytes: Uint8Array): Uint8Array {
+function getPublicKeyBytesForShortSignaturesLikeHerumi(secretKeyBytes: Uint8Array): { point: any; bytes: Uint8Array } {
     const secretKeyReversed = Buffer.from(secretKeyBytes).reverse();
-    const publicKey = G2.ProjectivePoint.fromPrivateKey(secretKeyReversed).toRawBytes(false);
-    const publicKeyReversed = Buffer.from(publicKey).reverse();
-    return publicKeyReversed.subarray(96);
+    const publicKeyPoint = G2.ProjectivePoint.fromPrivateKey(secretKeyReversed);
+    const publicKeyRawBytes = publicKeyPoint.toRawBytes(false);
+    const publicKeyRawBytesReversed = Buffer.from(publicKeyRawBytes).reverse();
+    const publicKeyBytes = publicKeyRawBytesReversed.subarray(96);
+
+    return { point: publicKeyPoint, bytes: publicKeyBytes };
 }
 
 function fromHex(input: string): Uint8Array {
