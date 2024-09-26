@@ -44,44 +44,102 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
     });
 
     it("test sign", async function () {
+        let { point, bytes } = { point: null, bytes: Uint8Array.from([]) };
+
+        // (1)
+        ({ point, bytes } = signMessage(
+            Buffer.from("hello"),
+            fromHex("7cff99bd671502db7d15bc8abc0c9a804fb925406fbdd50f1e4c17a4cd774247"),
+        ));
+
         assert.equal(
-            toHex(
-                signMessage(
-                    Buffer.from("hello"),
-                    fromHex("7cff99bd671502db7d15bc8abc0c9a804fb925406fbdd50f1e4c17a4cd774247"),
-                ),
-            ),
+            toHex(bytes),
             "84fd0a3a9d4f1ea2d4b40c6da67f9b786284a1c3895b7253fec7311597cda3f757862bb0690a92a13ce612c33889fd86",
         );
 
-        assert.equal(
-            toHex(
-                signMessage(
-                    Buffer.from("MultiversX"),
-                    fromHex("7cff99bd671502db7d15bc8abc0c9a804fb925406fbdd50f1e4c17a4cd774247"),
+        assert.deepEqual(
+            point,
+            new G1.ProjectivePoint(
+                BigInt(
+                    "1075917197297270438823667124980979079604536643546345831690492377869764230860196328088999257048104512062036330085764",
                 ),
+                BigInt(
+                    "2752102863809775026289891979823712675472849347369958094574438602351786261194612072949837472907472246482608716327027",
+                ),
+                BigInt("1"),
             ),
+        );
+
+        // (2)
+        ({ point, bytes } = signMessage(
+            Buffer.from("MultiversX"),
+            fromHex("7cff99bd671502db7d15bc8abc0c9a804fb925406fbdd50f1e4c17a4cd774247"),
+        ));
+
+        assert.equal(
+            toHex(bytes),
             "f6e6102fae2c88c26e1194dbc8dfe7731361db65e7f927a67b51fe28db75f2cab3cefec5def449faa26af12598b5a109",
         );
 
-        assert.equal(
-            toHex(
-                signMessage(
-                    Buffer.from("message to be signed"),
-                    fromHex("caffb9cb3d24451500f26def03cc034ae61978aeef702688c17ad2fd023c2837"),
+        assert.deepEqual(
+            point,
+            new G1.ProjectivePoint(
+                BigInt(
+                    "1482450793447963658715860002115932381939353442260222481654681881718504194663635571898087934545081216510025224218358",
                 ),
+                BigInt(
+                    "919962068442987202442974284059711666909493365278527151319266393641089300315888650888880306770171677910725372243558",
+                ),
+                BigInt("1"),
             ),
+        );
+
+        // (3)
+        ({ point, bytes } = signMessage(
+            Buffer.from("message to be signed"),
+            fromHex("caffb9cb3d24451500f26def03cc034ae61978aeef702688c17ad2fd023c2837"),
+        ));
+
+        assert.equal(
+            toHex(bytes),
             "aace25fd4beb6626ff1772f12b61861434d02c4c5c6ae8090befc557765d5f46f319ff229acbfc6783363c496af3de06",
         );
 
-        assert.equal(
-            toHex(
-                signMessage(
-                    Buffer.from("message to be signed"),
-                    fromHex("6a4451e61581d545b12390bd461bffe7ca3d28943e61647c96c5acfbe2d01721"),
+        assert.deepEqual(
+            point,
+            new G1.ProjectivePoint(
+                BigInt(
+                    "1057528563207676028023471675007908838941908816948083550247582496134098838133926129342771473293159115713044074057386",
                 ),
+                BigInt(
+                    "819383388216466089251030754544623561533944107703129473594279978102892509524555184566123042178198363789606717296010",
+                ),
+                BigInt("1"),
             ),
+        );
+
+        // (4)
+        ({ point, bytes } = signMessage(
+            Buffer.from("message to be signed"),
+            fromHex("6a4451e61581d545b12390bd461bffe7ca3d28943e61647c96c5acfbe2d01721"),
+        ));
+
+        assert.equal(
+            toHex(bytes),
             "6847485e9cb0ce069825f492071188f616b32a65e2596f078b15a6c0a2d6033206ea42b621cad0559aea9797f1918691",
+        );
+
+        assert.deepEqual(
+            point,
+            new G1.ProjectivePoint(
+                BigInt(
+                    "2697446633778451652418207690116743078036977488733553393326783157619907016998477975672020203823369897396697075042152",
+                ),
+                BigInt(
+                    "411441134594009551692769132494713679960976197576962287493840318284317560975445224925971779951042315122149124994335",
+                ),
+                BigInt("1"),
+            ),
         );
     });
 
@@ -301,17 +359,17 @@ function setupG2GeneratorPointsLikeHerumi() {
     );
 }
 
-function signMessage(message: Uint8Array, secretKey: Uint8Array): Uint8Array {
+function signMessage(message: Uint8Array, secretKey: Uint8Array): { point: any; bytes: Uint8Array } {
     const messagePoint = hashAndMapToG1PointLikeHerumi(message);
     return doSignMessage(messagePoint, secretKey);
 }
 
-function doSignMessage(messagePoint: any, secretKey: Uint8Array): Uint8Array {
+function doSignMessage(messagePoint: any, secretKey: Uint8Array): { point: any; bytes: Uint8Array } {
     const secretKeyReversed = Buffer.from(secretKey).reverse();
     const scalar = G1.normPrivateKeyToScalar(secretKeyReversed);
     const signaturePoint = messagePoint.multiply(scalar);
     const signature = projectivePointToBytesLikeHerumi(signaturePoint);
-    return signature;
+    return { point: signaturePoint, bytes: signature };
 }
 
 // Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/bn.hpp#L2122
@@ -553,6 +611,7 @@ function getHerumiConstants() {
 // We don't directly use Noble Crypto's toBytes(), since that handles not only the "compressed" flag, but also the flags "infinity" and "sort",
 // which aren't handled in Herumi's implementation.
 // See: https://github.com/paulmillr/noble-curves/blob/1.6.0/src/bls12-381.ts#L382
+// This works for "G1" points. It does not work for "G2" points.
 function projectivePointToBytesLikeHerumi(point: any): Uint8Array {
     const bytesCompressed = nobleUtils.numberToBytesBE(point.px, Fp.BYTES);
 
