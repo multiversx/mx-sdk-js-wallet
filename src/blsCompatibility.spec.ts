@@ -3,6 +3,8 @@ import * as nobleUtils from "@noble/curves/abstract/utils";
 import { bls12_381 as nobleBls } from "@noble/curves/bls12-381";
 import { sha512 } from "@noble/hashes/sha512";
 import { assert } from "chai";
+import path from "path";
+import { readTestFile } from "./testutils/files";
 
 const Fp = nobleBls.fields.Fp;
 const Fp2 = nobleBls.fields.Fp2;
@@ -17,6 +19,46 @@ const _0n = BigInt(0),
 describe.only("test BLS compatibility (noble crypto and herumi)", () => {
     before(() => {
         setupG2GeneratorPointsLikeHerumi();
+    });
+
+    it("test using test vectors", async function () {
+        this.timeout(10000);
+
+        const testdataPath = path.resolve(__dirname, "..", "testdata");
+        const filePath = path.resolve(testdataPath, "blsVectors.json");
+        const json = await readTestFile(filePath);
+        const records = JSON.parse(json);
+
+        for (const record of records) {
+            const {
+                secretKey,
+                publicKey,
+                publicKeyAsPoint,
+                message,
+                messageMapped,
+                messageMappedAsPoint,
+                signature,
+                signatureAsPoint,
+            } = record;
+
+            const secretKeyBytes = fromHex(secretKey);
+            const actualPublicKey = getPublicKeyBytesForShortSignaturesLikeHerumi(secretKeyBytes);
+            const actualMessageMapped = hashAndMapToG1LikeHerumi(Buffer.from(message));
+            const actualSignature = signMessage(Buffer.from(message), secretKeyBytes);
+            const verified = verifySignature(fromHex(signature), Buffer.from(message), fromHex(publicKey));
+
+            assert.equal(toHex(actualPublicKey.bytes), publicKey);
+            assertG2PointsAreEqual(actualPublicKey.point, publicKeyAsPoint);
+            assertG2PointsAreEqual(publicKeyAsPoint, bytesToG2ProjectivePoint(fromHex(publicKey)));
+
+            assert.equal(toHex(actualMessageMapped.bytes), messageMapped);
+            assertG1PointsAreEqual(actualMessageMapped.point, messageMappedAsPoint);
+
+            assert.equal(toHex(actualSignature.bytes), signature);
+            assertG1PointsAreEqual(actualSignature.point, signatureAsPoint);
+
+            assert.isTrue(verified);
+        }
     });
 
     it("test get public key", async function () {
@@ -446,37 +488,37 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
 
     it("test hashAndMapToG1LikeHerumi", async function () {
         assert.equal(
-            toHex(hashAndMapToG1LikeHerumi(Buffer.from("aaaaaaaa"))),
+            toHex(hashAndMapToG1LikeHerumi(Buffer.from("aaaaaaaa")).bytes),
             "05339eae300f121b5f6ddd41d54e2cefaf6a07472f4a87d2f7195f97d67559910ac1ada88f616a49189670db71769f89",
         );
 
         assert.equal(
-            toHex(hashAndMapToG1LikeHerumi(Buffer.from("hello"))),
+            toHex(hashAndMapToG1LikeHerumi(Buffer.from("hello")).bytes),
             "a1ddb026e51f6e477354f63b8b3cb59af7bf6da8e8a61685ab8c83c3c572ef801824318a45d97fc961fc6229ba18428e",
         );
 
         assert.equal(
-            toHex(hashAndMapToG1LikeHerumi(Buffer.from("world"))),
+            toHex(hashAndMapToG1LikeHerumi(Buffer.from("world")).bytes),
             "c68a746ae5f5675f2f146baaf1126d5355d00006fcaf24bc47ba328cb0e73e4ed4ebc53283c8a0ae5d01023ee1fe8587",
         );
 
         assert.equal(
-            toHex(hashAndMapToG1LikeHerumi(Buffer.from("this is a message"))),
+            toHex(hashAndMapToG1LikeHerumi(Buffer.from("this is a message")).bytes),
             "d99081a371bef2d6d747b1fea440e377365293a3d2a8cd0529ddab837360184fcc04453e5cea19fdd8d320ee81b44d97",
         );
 
         assert.equal(
-            toHex(hashAndMapToG1LikeHerumi(Buffer.from("MultiversX"))),
+            toHex(hashAndMapToG1LikeHerumi(Buffer.from("MultiversX")).bytes),
             "39f547f252c481ff9f1b465bdb335d03c4e430c8f3da4941a90beb30538b0faf1d240aa5e7fa30c44b738326a2035b18",
         );
 
         assert.equal(
-            toHex(hashAndMapToG1LikeHerumi(Buffer.from("SDK-JS"))),
+            toHex(hashAndMapToG1LikeHerumi(Buffer.from("SDK-JS")).bytes),
             "43df809a75f7153cebcc6346701c9c28319456ec9e9dbd39a46e797b07ca6e9145ff15c5c1483868dd57ccc0a8ff2b99",
         );
 
         assert.equal(
-            toHex(hashAndMapToG1LikeHerumi(Buffer.from("lorem ipsum"))),
+            toHex(hashAndMapToG1LikeHerumi(Buffer.from("lorem ipsum")).bytes),
             "3f456ad872e39d35b857031bb5328f9b1515e5d00d94db210b510e0f83064961c30dbe8fcf7304a298622d857952c682",
         );
     });
@@ -610,7 +652,7 @@ function setupG2GeneratorPointsLikeHerumi() {
 }
 
 function signMessage(message: Uint8Array, secretKey: Uint8Array): { point: any; bytes: Uint8Array } {
-    const messagePoint = hashAndMapToG1PointLikeHerumi(message);
+    const messagePoint = hashAndMapToG1LikeHerumi(message).point;
     return doSignMessage(messagePoint, secretKey);
 }
 
@@ -623,17 +665,12 @@ function doSignMessage(messagePoint: any, secretKey: Uint8Array): { point: any; 
 }
 
 // Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/bn.hpp#L2122
-function hashAndMapToG1LikeHerumi(message: Uint8Array): Uint8Array {
-    const point = hashAndMapToG1PointLikeHerumi(message);
-    const pointBytes = projectivePointG1ToBytes(point);
-    return pointBytes;
-}
-
-function hashAndMapToG1PointLikeHerumi(message: Uint8Array): any {
+function hashAndMapToG1LikeHerumi(message: Uint8Array): { point: any; bytes: Uint8Array } {
     const hash = sha512(message);
     const hashMasked = setArrayMaskLikeHerumi(hash);
-    const point = mapToG1LikeHerumi(hashMasked);
-    return point;
+    const messagePoint = mapToG1LikeHerumi(hashMasked);
+    const messagePointBytes = projectivePointG1ToBytes(messagePoint);
+    return { point: messagePoint, bytes: messagePointBytes };
 }
 
 // Herumi code: https://github.com/herumi/mcl/blob/v2.00/include/mcl/fp.hpp#L371
@@ -876,7 +913,7 @@ function projectivePointG1ToBytes(point: any): Uint8Array {
 
 function verifySignature(signature: Uint8Array, message: Uint8Array, publicKey: Uint8Array) {
     const signaturePoint = bytesToG1ProjectivePoint(signature);
-    const messagePoint = hashAndMapToG1PointLikeHerumi(message);
+    const messagePoint = hashAndMapToG1LikeHerumi(message).point;
     const publicKeyBestEffort = bytesToG2ProjectivePoint(publicKey);
 
     return doVerifySignature(signaturePoint, messagePoint, publicKeyBestEffort);
@@ -960,4 +997,21 @@ function fromHex(input: string): Uint8Array {
 
 function toHex(input: Uint8Array): string {
     return Buffer.from(input).toString("hex");
+}
+
+function assertG2PointsAreEqual(a: any, b: any) {
+    assertG2CoordinatesAreEqual(a.px, b.px);
+    assertG2CoordinatesAreEqual(a.py, b.py);
+    assertG2CoordinatesAreEqual(a.pz, b.pz);
+}
+
+function assertG2CoordinatesAreEqual(a: any, b: any) {
+    assert.equal(BigInt(a.c0), BigInt(b.c0));
+    assert.equal(BigInt(a.c1), BigInt(b.c1));
+}
+
+function assertG1PointsAreEqual(a: any, b: any) {
+    assert.equal(BigInt(a.px), BigInt(b.px));
+    assert.equal(BigInt(a.py), BigInt(b.py));
+    assert.equal(BigInt(a.pz), BigInt(b.pz));
 }
