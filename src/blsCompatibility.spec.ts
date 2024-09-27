@@ -5,9 +5,14 @@ import { sha512 } from "@noble/hashes/sha512";
 import { assert } from "chai";
 
 const Fp = nobleBls.fields.Fp;
+const Fp2 = nobleBls.fields.Fp2;
 const Fp12 = nobleBls.fields.Fp12;
 const G1 = nobleBls.G1;
 const G2 = nobleBls.G2;
+
+const _0n = BigInt(0),
+    _1n = BigInt(1),
+    _2n = BigInt(2);
 
 describe.only("test BLS compatibility (noble crypto and herumi)", () => {
     before(() => {
@@ -60,6 +65,29 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
             "f69e71a3f99a3c3ec5454183b33ea776a9e69cbecca81c13218d3f6becb2deeb258e6210e097c6c04d8ff7573a4bd102ca22fd1aee8dac6eba495f2d24849b28cfbafdf748ed33195abd34212bdbb5ca53e21cee30d966e5c11895fd31f51f16",
         );
 
+        assert.deepEqual(
+            point,
+            new G2.ProjectivePoint(
+                {
+                    c0: BigInt(
+                        "433661271695829089921360190443980832753108841773406357370240086285611419925077319038454821824047077659009050844918",
+                    ),
+                    c1: BigInt(
+                        "3405323792985409897907798249517878774337322259693403181669351154071760576695098192200009936903429248479524000965322",
+                    ),
+                },
+                {
+                    c0: BigInt(
+                        "927999871623282049185325572489633866688994556669652004281455192554942637289181951186311493868883729972104324573996",
+                    ),
+                    c1: BigInt(
+                        "1714267687938800341952817159326500663366485600845992297278843345921847412246468367114338791046622019150263241025599",
+                    ),
+                },
+                { c0: BigInt("1"), c1: BigInt("0") },
+            ),
+        );
+
         // (3)
         ({ point, bytes } = getPublicKeyBytesForShortSignaturesLikeHerumi(
             fromHex("6a4451e61581d545b12390bd461bffe7ca3d28943e61647c96c5acfbe2d01721"),
@@ -68,6 +96,123 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
         assert.equal(
             toHex(bytes),
             "3471540b7930bf52639acf66f8b98f73b87de782f5881d36e4c4008fd6de4214ccf1be7cbe2d8a1d4452fff453bc2416b8c7ce7ba84d34af58d20570d53aa12f6407125401dd103ffbb8a2d7f90c73639543c4e617a2da20398ad9d3a63c0010",
+        );
+
+        assert.deepEqual(
+            point,
+            new G2.ProjectivePoint(
+                {
+                    c0: BigInt(
+                        "3408196372172300583108098306665285549810542135011740411101379715373531531546184621382800026663879510257391436591412",
+                    ),
+                    c1: BigInt(
+                        "2462767830304532768002040828382300177908649595674986559724046870330348996795982703287529181326494815857625111906232",
+                    ),
+                },
+                {
+                    c0: BigInt(
+                        "3641568272787591149316353325109994671370153831804029542368040461537410659639860986155554174698256387507690298387578",
+                    ),
+                    c1: BigInt(
+                        "3951933514673338181624969710857357465341413357716139730820367459359689833168212667605790920550161196742095446173848",
+                    ),
+                },
+                { c0: BigInt("1"), c1: BigInt("0") },
+            ),
+        );
+    });
+
+    it("test bytesToG2ProjectivePoint", async function () {
+        let point = null;
+
+        // (1)
+        point = bytesToG2ProjectivePoint(
+            fromHex(
+                "e7beaa95b3877f47348df4dd1cb578a4f7cabf7a20bfeefe5cdd263878ff132b765e04fef6f40c93512b666c47ed7719b8902f6c922c04247989b7137e837cc81a62e54712471c97a2ddab75aa9c2f58f813ed4c0fa722bde0ab718bff382208",
+            ),
+        );
+
+        assert.deepEqual(
+            point,
+            new G2.ProjectivePoint(
+                {
+                    c0: BigInt(
+                        "3919955428688575730085685860036073739633787972833264583731840045036896941424552514726452428101081158274778240040679",
+                    ),
+                    c1: BigInt(
+                        "1251888271028119053185710118362018489701077424118770679065840704605207537511549798292283136162288865665846493548728",
+                    ),
+                },
+                {
+                    c0: BigInt(
+                        "766321536125856755687043939935636237469256141287091748483299451475465638283464980474140510452418505615360716159676",
+                    ),
+                    c1: BigInt(
+                        "3911964420278991987669984666792641817851437983180398415982138400848408215263068041872712430310420883567179181145852",
+                    ),
+                },
+                { c0: BigInt("1"), c1: BigInt("0") },
+            ),
+        );
+
+        // (2)
+        point = bytesToG2ProjectivePoint(
+            fromHex(
+                "f69e71a3f99a3c3ec5454183b33ea776a9e69cbecca81c13218d3f6becb2deeb258e6210e097c6c04d8ff7573a4bd102ca22fd1aee8dac6eba495f2d24849b28cfbafdf748ed33195abd34212bdbb5ca53e21cee30d966e5c11895fd31f51f16",
+            ),
+        );
+
+        assert.deepEqual(
+            point,
+            new G2.ProjectivePoint(
+                {
+                    c0: BigInt(
+                        "433661271695829089921360190443980832753108841773406357370240086285611419925077319038454821824047077659009050844918",
+                    ),
+                    c1: BigInt(
+                        "3405323792985409897907798249517878774337322259693403181669351154071760576695098192200009936903429248479524000965322",
+                    ),
+                },
+                {
+                    c0: BigInt(
+                        "927999871623282049185325572489633866688994556669652004281455192554942637289181951186311493868883729972104324573996",
+                    ),
+                    c1: BigInt(
+                        "1714267687938800341952817159326500663366485600845992297278843345921847412246468367114338791046622019150263241025599",
+                    ),
+                },
+                { c0: BigInt("1"), c1: BigInt("0") },
+            ),
+        );
+
+        // (3)
+        point = bytesToG2ProjectivePoint(
+            fromHex(
+                "3471540b7930bf52639acf66f8b98f73b87de782f5881d36e4c4008fd6de4214ccf1be7cbe2d8a1d4452fff453bc2416b8c7ce7ba84d34af58d20570d53aa12f6407125401dd103ffbb8a2d7f90c73639543c4e617a2da20398ad9d3a63c0010",
+            ),
+        );
+
+        assert.deepEqual(
+            point,
+            new G2.ProjectivePoint(
+                {
+                    c0: BigInt(
+                        "3408196372172300583108098306665285549810542135011740411101379715373531531546184621382800026663879510257391436591412",
+                    ),
+                    c1: BigInt(
+                        "2462767830304532768002040828382300177908649595674986559724046870330348996795982703287529181326494815857625111906232",
+                    ),
+                },
+                {
+                    c0: BigInt(
+                        "3641568272787591149316353325109994671370153831804029542368040461537410659639860986155554174698256387507690298387578",
+                    ),
+                    c1: BigInt(
+                        "3951933514673338181624969710857357465341413357716139730820367459359689833168212667605790920550161196742095446173848",
+                    ),
+                },
+                { c0: BigInt("1"), c1: BigInt("0") },
+            ),
         );
     });
 
@@ -763,6 +908,24 @@ function bytesToG1ProjectivePoint(bytes: Uint8Array): any {
 
     throw new Error("Cannot do bytesG1ToProjectivePoint");
 }
+
+function bytesToG2ProjectivePoint(bytes: Uint8Array): any {
+    const bytesReversed = Buffer.from(bytes).reverse();
+    bytesReversed[0] |= 0b1000_0000;
+
+    const point = G2.ProjectivePoint.fromHex(bytesReversed);
+    const yNegated = Fp2.neg(point.y);
+    const yNegatedIsOdd = Fp2.isOdd!(yNegated);
+    const yNegatedBit =
+        yNegated.c1 === _0n ? (yNegated.c0 * _2n) / Fp.ORDER : (yNegated.c1 * _2n) / Fp.ORDER ? _1n : _0n;
+
+    const shouldApplyCorrection = yNegatedIsOdd !== Boolean(yNegatedBit);
+
+    if (shouldApplyCorrection) {
+        return new G2.ProjectivePoint(point.px, yNegated, point.pz);
+    }
+
+    return point;
 }
 
 // We cannot directly use Noble Crypto's verifyShortSignatureLikeHerumi(), since that performs its own (standard) hashing and mapping to G1.
