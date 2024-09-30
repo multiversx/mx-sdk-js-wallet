@@ -900,7 +900,7 @@ function getHerumiConstants() {
 function projectivePointG1ToBytes(point: any): Uint8Array {
     const bytesCompressed = nobleUtils.numberToBytesBE(point.px, Fp.BYTES);
 
-    // Question for review: is this correct? We set the "compressed" flag for negative y values.
+    //  We set the "compressed" flag for negative y values.
     if (isNegativeLE(point.py, Fp.ORDER)) {
         bytesCompressed[0] |= 0b1000_0000;
     }
