@@ -948,17 +948,23 @@ function bytesToG1ProjectivePoint(bytes: Uint8Array): any {
 
 function bytesToG2ProjectivePoint(bytes: Uint8Array): any {
     const bytesReversed = Buffer.from(bytes).reverse();
+
+    // Retain the "compressed" flag, as is.
+    const isCompressed = !!(bytesReversed[0] & 0b1000_0000);
+
+    // Overwrite the "compressed" flag, so that we don't mislead Noble Crypto, since Herumi-like encoding is always compressed (even if the flag isn't set):
+    // https://github.com/paulmillr/noble-curves/blob/main/src/bls12-381.ts#L500
     bytesReversed[0] |= 0b1000_0000;
 
     const point = G2.ProjectivePoint.fromHex(bytesReversed);
     const yNegated = Fp2.neg(point.y);
-    const yNegatedIsOdd = Fp2.isOdd!(yNegated);
-    const yNegatedBit =
-        yNegated.c1 === _0n ? (yNegated.c0 * _2n) / Fp.ORDER : (yNegated.c1 * _2n) / Fp.ORDER ? _1n : _0n;
+    const yIsOdd = Fp2.isOdd!(point.y);
 
-    const shouldApplyCorrection = yNegatedIsOdd !== Boolean(yNegatedBit);
-
+    // Herumi does not handle the "sort" flag; we need to correct the y-coordinate if necessary.
+    const shouldApplyCorrection = (!isCompressed && yIsOdd) || (isCompressed && !yIsOdd);
     if (shouldApplyCorrection) {
+        // We'll return "-y" instead of "y". That is, undo the operation performed by Noble Crypto here:
+        // https://github.com/paulmillr/noble-curves/blob/main/src/bls12-381.ts#L513
         return new G2.ProjectivePoint(point.px, yNegated, point.pz);
     }
 
