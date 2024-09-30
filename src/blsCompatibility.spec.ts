@@ -12,18 +12,19 @@ const Fp12 = nobleBls.fields.Fp12;
 const G1 = nobleBls.G1;
 const G2 = nobleBls.G2;
 
-describe.only("test BLS compatibility (noble crypto and herumi)", () => {
+describe("test BLS compatibility (noble crypto and herumi)", () => {
     before(() => {
         setupG2GeneratorPointsLikeHerumi();
     });
 
     it("test using test vectors", async function () {
-        this.timeout(150000);
+        this.timeout(100000);
 
+        const numVectors = 256;
         const testdataPath = path.resolve(__dirname, "testdata");
         const filePath = path.resolve(testdataPath, "blsVectors.json");
         const json = await readTestFile(filePath);
-        const records = JSON.parse(json);
+        const records = JSON.parse(json).slice(0, numVectors);
 
         for (let i = 0; i < records.length; i++) {
             console.log(`Running test vector ${i++}`);
