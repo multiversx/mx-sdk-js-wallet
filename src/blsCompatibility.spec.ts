@@ -20,13 +20,13 @@ describe("test BLS compatibility (noble crypto and herumi)", () => {
     it("test using test vectors", async function () {
         this.timeout(100000);
 
-        const numVectors = 256;
         const testdataPath = path.resolve(__dirname, "testdata");
         const filePath = path.resolve(testdataPath, "blsVectors.json");
         const json = await readTestFile(filePath);
-        const records = JSON.parse(json).slice(0, numVectors);
+        const records = JSON.parse(json);
+        const numVectors = 256;
 
-        for (let i = 0; i < records.length; i++) {
+        for (let i = 0; i < numVectors; i++) {
             console.log(`Running test vector ${i++}`);
 
             const {
