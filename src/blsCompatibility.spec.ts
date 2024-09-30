@@ -11,6 +11,7 @@ const Fp2 = nobleBls.fields.Fp2;
 const Fp12 = nobleBls.fields.Fp12;
 const G1 = nobleBls.G1;
 const G2 = nobleBls.G2;
+const CompressedFlagMask = 0b1000_0000;
 
 describe("test BLS compatibility (noble crypto and herumi)", () => {
     before(() => {
@@ -257,7 +258,7 @@ describe("test BLS compatibility (noble crypto and herumi)", () => {
         );
     });
 
-    it("test sign", async function () {
+    it("test signMessage", async function () {
         let { point, bytes } = { point: null, bytes: Uint8Array.from([]) };
 
         // (1)
@@ -459,7 +460,7 @@ describe("test BLS compatibility (noble crypto and herumi)", () => {
         );
     });
 
-    it("test verify (does not work yet, still debugging)", async function () {
+    it("test verifySignature", async function () {
         assert.isTrue(
             verifySignature(
                 fromHex(
@@ -839,16 +840,14 @@ function calcBNLoopLikeHerumiIteration2(w: bigint): bigint {
 }
 
 function legendreLikeHerumi(x: bigint): number {
-    let f = Fp;
+    const legendre = FpLegendre(Fp.ORDER);
+    const legendreSymbol = legendre(Fp, x);
 
-    const legendre = FpLegendre(f.ORDER);
-    const legendreSymbol = legendre(f, x);
-
-    if (f.eql(legendreSymbol, f.ZERO)) {
+    if (Fp.eql(legendreSymbol, Fp.ZERO)) {
         return 0;
     }
 
-    if (f.eql(legendreSymbol, f.ONE)) {
+    if (Fp.eql(legendreSymbol, Fp.ONE)) {
         return 1;
     }
 
@@ -866,7 +865,7 @@ function legendreLikeHerumi(x: bigint): number {
 // }
 function getWeierstrassLikeHerumi(x: bigint): bigint {
     const a = Fp.ZERO;
-    const b = nobleBls.G1.CURVE.b;
+    const b = G1.CURVE.b;
 
     let t = Fp.sqr(x);
     t = Fp.add(t, a);
@@ -884,10 +883,12 @@ function getHerumiConstants() {
         "fdfffdffffff035c040014c426b02fbc112df1cd775267bbd5ef1ed40e8cd374a39cedbe5fce32be0000000000000000",
         "hex",
     );
+
     const c2Bytes = Buffer.from(
         "fefffeffffff012e02000a6213d817de8896f8e63ba9b3ddea770f6a07c669ba51ce76df2f67195f0000000000000000",
         "hex",
     );
+
     const c1 = nobleUtils.bytesToNumberLE(c1Bytes);
     const c2 = nobleUtils.bytesToNumberLE(c2Bytes);
 
@@ -901,9 +902,9 @@ function getHerumiConstants() {
 function projectivePointG1ToBytes(point: any): Uint8Array {
     const bytesCompressed = nobleUtils.numberToBytesBE(point.px, Fp.BYTES);
 
-    //  We set the "compressed" flag for negative y values.
+    //  We set the "compressed" flag for negative "y" values.
     if (isNegativeLE(point.py, Fp.ORDER)) {
-        bytesCompressed[0] |= 0b1000_0000;
+        bytesCompressed[0] |= CompressedFlagMask;
     }
 
     bytesCompressed.reverse();
@@ -922,11 +923,11 @@ function bytesToG1ProjectivePoint(bytes: Uint8Array): any {
     const bytesReversed = Buffer.from(bytes).reverse();
 
     // Retain the "compressed" flag, as is.
-    const isCompressed = !!(bytesReversed[0] & 0b1000_0000);
+    const isCompressed = !!(bytesReversed[0] & CompressedFlagMask);
 
     // Overwrite the "compressed" flag, so that we don't mislead Noble Crypto, since Herumi-like encoding is always compressed (even if the flag isn't set):
     // https://github.com/paulmillr/noble-curves/blob/1.6.0/src/bls12-381.ts#L500
-    bytesReversed[0] |= 0b1000_0000;
+    bytesReversed[0] |= CompressedFlagMask;
 
     const point = G1.ProjectivePoint.fromHex(bytesReversed);
     const isYOdd = Fp.isOdd!(point.py);
@@ -947,11 +948,11 @@ function bytesToG2ProjectivePoint(bytes: Uint8Array): any {
     const bytesReversed = Buffer.from(bytes).reverse();
 
     // Retain the "compressed" flag, as is.
-    const isCompressed = !!(bytesReversed[0] & 0b1000_0000);
+    const isCompressed = !!(bytesReversed[0] & CompressedFlagMask);
 
     // Overwrite the "compressed" flag, so that we don't mislead Noble Crypto, since Herumi-like encoding is always compressed (even if the flag isn't set):
     // https://github.com/paulmillr/noble-curves/blob/1.6.0/src/bls12-381.ts#L651
-    bytesReversed[0] |= 0b1000_0000;
+    bytesReversed[0] |= CompressedFlagMask;
 
     const point = G2.ProjectivePoint.fromHex(bytesReversed);
     const yNegated = Fp2.neg(point.y);
@@ -994,7 +995,7 @@ function getPublicKeyBytesForShortSignaturesLikeHerumi(secretKeyBytes: Uint8Arra
     const isYOdd = Fp2.isOdd!(publicKeyPoint.py);
     if (isYOdd) {
         // Set "compressed" flag.
-        publicKeyBytes[publicKeyBytes.length - 1] |= 0b1000_0000;
+        publicKeyBytes[publicKeyBytes.length - 1] |= CompressedFlagMask;
     }
 
     return { point: publicKeyPoint, bytes: publicKeyBytes };
