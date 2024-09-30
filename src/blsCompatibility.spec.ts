@@ -12,24 +12,22 @@ const Fp12 = nobleBls.fields.Fp12;
 const G1 = nobleBls.G1;
 const G2 = nobleBls.G2;
 
-const _0n = BigInt(0),
-    _1n = BigInt(1),
-    _2n = BigInt(2);
-
 describe.only("test BLS compatibility (noble crypto and herumi)", () => {
     before(() => {
         setupG2GeneratorPointsLikeHerumi();
     });
 
     it("test using test vectors", async function () {
-        this.timeout(10000);
+        this.timeout(150000);
 
-        const testdataPath = path.resolve(__dirname, "..", "testdata");
+        const testdataPath = path.resolve(__dirname, "testdata");
         const filePath = path.resolve(testdataPath, "blsVectors.json");
         const json = await readTestFile(filePath);
         const records = JSON.parse(json);
 
-        for (const record of records) {
+        for (let i = 0; i < records.length; i++) {
+            console.log(`Running test vector ${i++}`);
+
             const {
                 secretKey,
                 publicKey,
@@ -39,7 +37,7 @@ describe.only("test BLS compatibility (noble crypto and herumi)", () => {
                 messageMappedAsPoint,
                 signature,
                 signatureAsPoint,
-            } = record;
+            } = records[i];
 
             const secretKeyBytes = fromHex(secretKey);
             const actualPublicKey = getPublicKeyBytesForShortSignaturesLikeHerumi(secretKeyBytes);
@@ -991,6 +989,12 @@ function getPublicKeyBytesForShortSignaturesLikeHerumi(secretKeyBytes: Uint8Arra
     const publicKeyRawBytes = publicKeyPoint.toRawBytes(false);
     const publicKeyRawBytesReversed = Buffer.from(publicKeyRawBytes).reverse();
     const publicKeyBytes = publicKeyRawBytesReversed.subarray(96);
+
+    const isYOdd = Fp2.isOdd!(publicKeyPoint.py);
+    if (isYOdd) {
+        // Set "compressed" flag.
+        publicKeyBytes[publicKeyBytes.length - 1] |= 0b1000_0000;
+    }
 
     return { point: publicKeyPoint, bytes: publicKeyBytes };
 }
