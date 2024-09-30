@@ -922,28 +922,26 @@ function verifySignature(signature: Uint8Array, message: Uint8Array, publicKey: 
 function bytesToG1ProjectivePoint(bytes: Uint8Array): any {
     const bytesReversed = Buffer.from(bytes).reverse();
 
-    const bytesReversedWithCompressed = Buffer.from(bytesReversed);
-    bytesReversedWithCompressed[0] |= 0b1000_0000;
+    // Retain the "compressed" flag, as is.
+    const isCompressed = !!(bytesReversed[0] & 0b1000_0000);
 
-    const bytesReversedWithCompressedAndSort = Buffer.from(bytesReversed);
-    bytesReversedWithCompressedAndSort[0] |= 0b1000_0000;
-    bytesReversedWithCompressedAndSort[0] |= 0b0010_0000;
+    // Overwrite the "compressed" flag, so that we don't mislead Noble Crypto, since Herumi-like encoding is always compressed (even if the flag isn't set):
+    // https://github.com/paulmillr/noble-curves/blob/1.6.0/src/bls12-381.ts#L500
+    bytesReversed[0] |= 0b1000_0000;
 
-    const pointWithCompressed = G1.ProjectivePoint.fromHex(bytesReversedWithCompressed);
-    const pointWithCompressedAndSort = G1.ProjectivePoint.fromHex(bytesReversedWithCompressedAndSort);
+    const point = G1.ProjectivePoint.fromHex(bytesReversed);
+    const isYOdd = Fp.isOdd!(point.py);
+    const yNegated = Fp.neg(point.y);
 
-    const bytesFromPointWithCompressed = projectivePointG1ToBytes(pointWithCompressed);
-    const bytesFromPointWithCompressedAndSort = projectivePointG1ToBytes(pointWithCompressedAndSort);
-
-    if (Buffer.compare(bytes, bytesFromPointWithCompressed) == 0) {
-        return pointWithCompressed;
+    // Herumi does not handle the "sort" flag; we need to correct the y-coordinate if necessary.
+    const shouldApplyCorrection = (!isCompressed && isYOdd) || (isCompressed && !isYOdd);
+    if (shouldApplyCorrection) {
+        // We'll return "-y" instead of "y". That is, undo the operation performed by Noble Crypto here:
+        // https://github.com/paulmillr/noble-curves/blob/1.6.0/src/bls12-381.ts#L513
+        return new G1.ProjectivePoint(point.px, yNegated, point.pz);
     }
 
-    if (Buffer.compare(bytes, bytesFromPointWithCompressedAndSort) == 0) {
-        return pointWithCompressedAndSort;
-    }
-
-    throw new Error("Cannot do bytesG1ToProjectivePoint");
+    return point;
 }
 
 function bytesToG2ProjectivePoint(bytes: Uint8Array): any {
@@ -953,18 +951,18 @@ function bytesToG2ProjectivePoint(bytes: Uint8Array): any {
     const isCompressed = !!(bytesReversed[0] & 0b1000_0000);
 
     // Overwrite the "compressed" flag, so that we don't mislead Noble Crypto, since Herumi-like encoding is always compressed (even if the flag isn't set):
-    // https://github.com/paulmillr/noble-curves/blob/main/src/bls12-381.ts#L500
+    // https://github.com/paulmillr/noble-curves/blob/1.6.0/src/bls12-381.ts#L651
     bytesReversed[0] |= 0b1000_0000;
 
     const point = G2.ProjectivePoint.fromHex(bytesReversed);
     const yNegated = Fp2.neg(point.y);
-    const yIsOdd = Fp2.isOdd!(point.y);
+    const isYodd = Fp2.isOdd!(point.y);
 
     // Herumi does not handle the "sort" flag; we need to correct the y-coordinate if necessary.
-    const shouldApplyCorrection = (!isCompressed && yIsOdd) || (isCompressed && !yIsOdd);
+    const shouldApplyCorrection = (!isCompressed && isYodd) || (isCompressed && !isYodd);
     if (shouldApplyCorrection) {
         // We'll return "-y" instead of "y". That is, undo the operation performed by Noble Crypto here:
-        // https://github.com/paulmillr/noble-curves/blob/main/src/bls12-381.ts#L513
+        // https://github.com/paulmillr/noble-curves/blob/1.6.0/src/bls12-381.ts#L667
         return new G2.ProjectivePoint(point.px, yNegated, point.pz);
     }
 
@@ -972,7 +970,7 @@ function bytesToG2ProjectivePoint(bytes: Uint8Array): any {
 }
 
 // We cannot directly use Noble Crypto's verifyShortSignatureLikeHerumi(), since that performs its own (standard) hashing and mapping to G1.
-// See: https://github.com/paulmillr/noble-curves/blob/main/src/abstract/bls.ts#L420
+// See: https://github.com/paulmillr/noble-curves/blob/1.6.0/src/abstract/bls.ts#L420
 function doVerifySignature(signaturePoint: any, messagePoint: any, publicKeyPoint: any): boolean {
     const P = publicKeyPoint;
     const Hm = messagePoint;
