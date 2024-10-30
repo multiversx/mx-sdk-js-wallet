@@ -1,4 +1,4 @@
-# This repo was moved to [sdk-core](https://www.npmjs.com/package/@multiversx/sdk-wallet) and will soon be deprecated
+# This repo was moved to [sdk-core](https://www.npmjs.com/package/@multiversx/sdk-core) and will soon be deprecated
 For the update you will need to fix the imports 
 
 ## For example:
