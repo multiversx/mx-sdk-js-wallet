@@ -1,16 +1,12 @@
-# This repo was moved to [sdk-core](https://www.npmjs.com/package/@multiversx/sdk-core) and will soon be deprecated
-For the update you will need to fix the imports 
+# This package was integrated into [sdk-core](https://www.npmjs.com/package/@multiversx/sdk-core) and will soon be deprecated
+To utilize the functionality from the unified @multiversx/sdk-core library, please update the existing import statements within your project.
 
-## For example:
+For example:
 ``` 
 import { UserSigner } from "@multiversx/sdk-wallet";
-
-will be 
-
+```
+should be changed to:
+```
 import { UserSigner } from "@multiversx/sdk-core";
 
 ```
-
-# MultiversX SDK for JavaScript and TypeScript: wallet components
-
-Wallet components (generation, signing) for TypeScript (JavaScript).
