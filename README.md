@@ -1,55 +1,12 @@
-# MultiversX SDK for JavaScript and TypeScript: wallet components
+# This package was integrated into [sdk-core](https://www.npmjs.com/package/@multiversx/sdk-core) and will soon be deprecated
+To utilize the functionality from the unified @multiversx/sdk-core library, please update the existing import statements within your project.
 
-Wallet components (generation, signing) for TypeScript (JavaScript).
-
-## Distribution
-
-[npm](https://www.npmjs.com/package/@multiversx/sdk-wallet)
-
-## Installation
-
-`sdk-wallet` is delivered via [npm](https://www.npmjs.com/package/@multiversx/sdk-wallet), therefore it can be installed as follows:
-
+For example:
+``` 
+import { UserSigner } from "@multiversx/sdk-wallet";
 ```
-npm install @multiversx/sdk-wallet
+should be changed to:
 ```
+import { UserSigner } from "@multiversx/sdk-core";
 
-## Development
-
-Feel free to skip this section if you are not a contributor.
-
-### Additional dependencies
-
-Instanbul, for code coverage:
-
-```
-npm install --no-save nyc
-```
-
-### Building the library
-
-In order to compile `sdk-wallet`, run the following:
-
-```
-npm install
-npm run compile
-npm run compile-browser
-```
-
-### Running the tests
-
-#### On NodeJS
-
-In order to run the tests **on NodeJS**, do as follows:
-
-```
-npm run test
-```
-
-#### In the browser
-
-In order to run the tests **in the browser**, do as follows:
-
-```
-npm run browser-tests
 ```
